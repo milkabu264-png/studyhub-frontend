@@ -1,56 +1,57 @@
 # StudyHub Frontend
 
-Frontend-часть веб-приложения StudyHub.
+Этот README в первую очередь предназначен для backend-разработчика.
 
-## Стек
+Frontend написан на React + TypeScript + Vite.
+Backend проекта — C# + ASP.NET Core.
 
-- React 18
-- TypeScript
-- Vite
-- React Router
-- CSS
-- HTML5 Drag & Drop API
-
-Backend:
-- C#
-- ASP.NET Core
-- Dapper
-
-Database:
-- PostgreSQL
-- Flyway
+По архитектуре MVC frontend выполняет роль View:
+он отображает данные, отправляет запросы и получает JSON от backend.
 
 ---
 
-# Архитектура
+# Быстрая навигация для backend-разработчика
 
-Проект строится по MVC.
+Если нужно понять:
 
-В общей архитектуре приложения:
-
-- Model — backend на C#
-- Controller — ASP.NET Core Controllers
-- View — React frontend
-
-Frontend не обращается к PostgreSQL напрямую.
-
-Схема взаимодействия:
-
-React
-↓
-REST API
-↓
-ASP.NET Core
-↓
-Dapper
-↓
-PostgreSQL
+| Что нужно узнать | Где смотреть |
+|---|---|
+| Как выглядит объект задачи | `src/types/task.ts` |
+| Какие данные frontend отправляет при создании задачи | `src/types/task.ts` → `CreateTaskRequest` |
+| Какие данные frontend отправляет при изменении задачи | `src/types/task.ts` → `UpdateTaskRequest` |
+| Как выглядит состояние костра | `src/types/campfire.ts` |
+| Как frontend ожидает ошибки | `src/types/api.ts` |
+| Какие запросы задач вызывает frontend | `src/services/tasksApi.ts` |
+| Как frontend получает состояние костра | `src/services/campfireApi.ts` |
+| Как устроен общий запрос к backend | `src/services/api.ts` |
+| Какие данные используются до подключения backend | `src/mocks/` |
+| Как эти данные используются интерфейсом | `src/features/` и `src/pages/` |
+| Адрес backend API | `.env` |
 
 ---
 
-# Запуск frontend
+# Структура frontend
 
-Установить зависимости:
+Основные папки, которые могут понадобиться backend-разработчику:
 
-```bash
-npm install
+```text
+src/
+│
+├── types/
+│   ├── api.ts
+│   ├── task.ts
+│   └── campfire.ts
+│
+├── services/
+│   ├── api.ts
+│   ├── tasksApi.ts
+│   └── campfireApi.ts
+│
+├── mocks/
+│   └── tasks.ts
+│
+├── features/
+│
+├── pages/
+│
+└── app/
