@@ -1,0 +1,97 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: rgba(0, 0, 0, 0.35);
+
+  z-index: 1000;
+}
+
+.task-modal {
+  width: 420px;
+  max-width: calc(100% - 32px);
+
+  padding: 24px;
+
+  background-color: white;
+
+  border-radius: 16px;
+}
+
+.task-modal h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.task-modal form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+.task-modal label {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.task-modal input,
+.task-modal textarea,
+.task-modal select {
+  width: 100%;
+
+  padding: 10px 12px;
+
+  border: 1px solid #d6d6d6;
+  border-radius: 10px;
+
+  outline: none;
+}
+
+.task-modal textarea {
+  min-height: 90px;
+
+  resize: vertical;
+}
+
+.task-modal input:focus,
+.task-modal textarea:focus,
+.task-modal select:focus {
+  border-color: #66785f;
+}
+
+.task-modal form > div:last-child {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 8px;
+}
+
+.task-modal button {
+  padding: 10px 16px;
+
+  border: none;
+  border-radius: 10px;
+
+  cursor: pointer;
+}
+
+.task-modal button[type="button"] {
+  background-color: #e8e3d6;
+}
+
+.task-modal button[type="submit"] {
+  background-color: #66785f;
+  color: white;
+}

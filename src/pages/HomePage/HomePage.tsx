@@ -1,8 +1,14 @@
+import { useState } from "react";
+
+import CreateTaskModal from "../../features/tasks/CreateTaskModal";
 import TaskList from "../../features/tasks/TaskList";
 import { mockTasks } from "../../mocks/tasks";
 import "./HomePage.css";
 
 export default function HomePage() {
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <div className="home-page">
       <div className="home-date">
@@ -18,9 +24,12 @@ export default function HomePage() {
           <div className="tasks-header">
             <h2>Задачи</h2>
 
-            <button type="button">
-              Добавить задачу
-            </button>
+<button
+  type="button"
+  onClick={() => setIsModalOpen(true)}
+>
+  Добавить задачу
+</button>
           </div>
 
           <TaskList tasks={mockTasks} />
@@ -36,6 +45,11 @@ export default function HomePage() {
           <p>Брёвен сегодня: 0</p>
         </section>
       </div>
+      {isModalOpen && (
+  <CreateTaskModal
+    onClose={() => setIsModalOpen(false)}
+  />
+)}
     </div>
   );
 }
