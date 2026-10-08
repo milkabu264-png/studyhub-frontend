@@ -27,10 +27,10 @@ export async function apiRequest<T>(
     let message = "Произошла ошибка";
 
     try {
-      const error = await response.json();
+      const error = await response.json(); //пытаемся достать причину ошибки
 
       if (error.message) {
-        message = error.message;
+        message = error.message; //есть ли текст ошибки, если есть - то показываем 
       }
     } catch {
       message = "Не удалось получить ответ от сервера";
@@ -41,7 +41,7 @@ export async function apiRequest<T>(
 
   if (response.status === 204) {
     return undefined as T;
-  }
+  }//сервер ответил успешно, но без контента (тело отвеиа пустое)
 
   return response.json() as Promise<T>;
 }

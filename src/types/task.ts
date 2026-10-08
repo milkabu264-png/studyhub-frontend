@@ -31,3 +31,25 @@ export interface Task {
 //интерфейс для задачи, который описывает все свойства задачи,
 //включая id, заголовок, описание, дату, сложность, категорию, статус,
 //дату создания и дату завершения (если задача завершена).
+
+export interface CreateTaskRequest {
+  title: string;
+  description: string | null;
+  date: string;
+  difficulty: TaskDifficulty;
+  category: string | null;
+}
+
+//интерфейс для запроса на создание задачи, который описывает все свойства задачи,
+//кроме id, статуса, даты создания и даты завершения, которые будут установлены сервером.
+
+export interface UpdateTaskRequest {
+  title: string;
+  description: string | null;
+  date: string;
+  difficulty: TaskDifficulty;
+  category: string | null;
+}
+
+//интерфейс для запроса на обновление задачи, который описывает все свойства задачи,
+//кроме id, статуса, даты создания и даты завершения, которые будут установлены сервером.
