@@ -1,5 +1,4 @@
-import "./HomePage.css";
-import TaskCard from "../../features/tasks/TaskCard";
+import TaskList from "../../features/tasks/TaskList";
 import { mockTasks } from "../../mocks/tasks";
 import "./HomePage.css";
 
@@ -24,7 +23,7 @@ export default function HomePage() {
             </button>
           </div>
 
-          <TaskCard task={mockTasks[0]} /> 
+          <TaskList tasks={mockTasks} />
         </section>
         //просто используем заглушку для нулевой карточки
         <section className="campfire-section">
