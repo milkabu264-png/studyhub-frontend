@@ -23,23 +23,37 @@ export default function CreateTaskModal({
     useState<TaskDifficulty | "">("");
   const [category, setCategory] = useState("");
 
+const [errors, setErrors] = useState({
+  title: false,
+  date: false,
+  difficulty: false,
+});//эт состоние ошибки
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  event.preventDefault();
 
-    if (!title || !date || !difficulty) {
-      return;
-    }
+  const newErrors = {
+    title: title.trim() === "",
+    date: date === "",
+    difficulty: difficulty === "",
+  };
 
-    onCreate({
-      title,
-      description: description || null,
-      date,
-      difficulty,
-      category: category || null,
-    });
+  setErrors(newErrors);
 
-    onClose();
+  if (!title.trim() || !date || !difficulty) {
+    return;
   }
+
+  onCreate({
+    title,
+    description: description || null,
+    date,
+    difficulty,
+    category: category || null,
+  });
+
+  onClose();
+}
 
   return (
     <div className="modal-overlay">
@@ -48,18 +62,31 @@ export default function CreateTaskModal({
 
         <form onSubmit={handleSubmit}>
           <label>
-            Название
+  Название
 
-            <input
-              type="text"
-              placeholder="Введите название"
-              value={title}
-              onChange={(event) =>
-                setTitle(event.target.value)
-              }
-            />
-          </label>
+  <input
+    type="text"
+    placeholder="Введите название"
+    value={title}
+    className={errors.title ? "input-error" : ""}
+    onChange={(event) => {
+      setTitle(event.target.value);
 
+      if (errors.title) {
+        setErrors({
+          ...errors,
+          title: false,
+        });
+      }
+    }}
+  />
+
+  {errors.title && (
+    <span className="error-text">
+      Введите название задачи
+    </span>
+  )}
+</label>
           <label>
             Описание
 
@@ -73,45 +100,73 @@ export default function CreateTaskModal({
           </label>
 
           <label>
-            Дата
+  Дата
 
-            <input
-              type="date"
-              value={date}
-              onChange={(event) =>
-                setDate(event.target.value)
-              }
-            />
-          </label>
+  <input
+    type="date"
+    value={date}
+    className={errors.date ? "input-error" : ""}
+    onChange={(event) => {
+      setDate(event.target.value);
 
-          <label>
-            Сложность
+      if (errors.date) {
+        setErrors({
+          ...errors,
+          date: false,
+        });
+      }
+    }}
+  />
 
-            <select
-              value={difficulty}
-              onChange={(event) =>
-                setDifficulty(
-                  event.target.value as TaskDifficulty,
-                )
-              }
-            >
-              <option value="" disabled>
-                Выберите сложность
-              </option>
+  {errors.date && (
+    <span className="error-text">
+      Выберите дату
+    </span>
+  )}
+</label>
 
-              <option value="easy">
-                Лёгкая
-              </option>
+<label>
+  Сложность
 
-              <option value="medium">
-                Средняя
-              </option>
+  <select
+    value={difficulty}
+    className={errors.difficulty ? "input-error" : ""}
+    onChange={(event) => {
+      setDifficulty(
+        event.target.value as TaskDifficulty,
+      );
 
-              <option value="hard">
-                Сложная
-              </option>
-            </select>
-          </label>
+      if (errors.difficulty) {
+        setErrors({
+          ...errors,
+          difficulty: false,
+        });
+      }
+    }}
+  >
+    <option value="" disabled>
+      Выберите сложность
+    </option>
+
+    <option value="easy">
+      Лёгкая
+    </option>
+
+    <option value="medium">
+      Средняя
+    </option>
+
+    <option value="hard">
+      Сложная
+    </option>
+  </select>
+
+  {errors.difficulty && (
+    <span className="error-text">
+      Выберите сложность
+    </span>
+  )}
+</label>
 
           <label>
             Категория
