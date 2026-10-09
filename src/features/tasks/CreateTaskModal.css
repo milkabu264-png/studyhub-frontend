@@ -95,3 +95,14 @@
   background-color: #66785f;
   color: white;
 }
+
+.input-error {
+  border-color: #c94b4b !important;
+}
+
+.error-text {
+  color: #c94b4b;
+
+  font-size: 12px;
+  font-weight: 400;
+}
