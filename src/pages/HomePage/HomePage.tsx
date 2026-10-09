@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+
 import CreateTaskModal from "../../features/tasks/CreateTaskModal";
 import TaskList from "../../features/tasks/TaskList";
 import { mockTasks } from "../../mocks/tasks";
@@ -18,6 +19,8 @@ export default function HomePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
+
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   function handleCreateTask(data: CreateTaskRequest) {
   const newTask: Task = {
@@ -41,14 +44,22 @@ export default function HomePage() {
   ]);
 }
 
+const today = new Date();
+
+const formattedDate = today.toLocaleDateString("ru-RU", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
   return (
+
+    
     <div className="home-page">
       <div className="home-date">
-        <button type="button">←</button>
 
-        <h2>Сегодня</h2>
+       <h2>{formattedDate}</h2>
 
-        <button type="button">→</button>
       </div>
 
       <div className="home-content">

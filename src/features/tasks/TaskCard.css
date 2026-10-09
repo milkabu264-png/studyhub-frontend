@@ -33,3 +33,14 @@
 
   font-size: 14px;
 }
+
+.task-deadline {
+  padding: 8px 8px;
+  font-size: 14px;
+  color: #777;
+}
+
+.task-deadline-overdue {
+  color: #c94b4b;
+  font-weight: 600;
+}

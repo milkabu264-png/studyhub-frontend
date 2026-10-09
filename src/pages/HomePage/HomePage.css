@@ -12,15 +12,6 @@
   margin-bottom: 32px;
 }
 
-.home-date button {
-  border: none;
-  background: none;
-
-  font-size: 22px;
-
-  cursor: pointer;
-}
-
 .home-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
