@@ -1,5 +1,9 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+//пока backend не готов, frontend работает на моках из src/mocks
+//(VITE_USE_MOCKS=true в .env). Когда backend запущен — ставим false.
+export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
+
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},

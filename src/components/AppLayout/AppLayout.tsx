@@ -11,6 +11,11 @@ export default function AppLayout() {
       <main className="app-content">
         <Outlet />
       </main>
+
+      <footer className="app-footer">
+        <span>Не нужно успеть всё. Достаточно сделать важное.</span>
+        <span>StudyHub · Ваш спокойный ритм</span>
+      </footer>
     </div>
   );
 }

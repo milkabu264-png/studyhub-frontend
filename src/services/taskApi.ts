@@ -6,9 +6,11 @@ import type {
   UpdateTaskRequest,
 } from "../types/task.ts";
 
-export function getTasks(date: string) {
+//без даты — все задачи пользователя (нужны для вкладок «В работе» / «Предстоящие» / «Сожжённые»),
+//с датой — только задачи на этот день
+export function getTasks(date?: string) {
   return apiRequest<Task[]>(
-    `/tasks?date=${date}`,
+    date ? `/tasks?date=${date}` : "/tasks",
   );
 }
 
@@ -53,6 +55,18 @@ export function completeTask(
 ) {
   return apiRequest<Task>(
     `/tasks/${id}/complete`,
+    {
+      method: "POST",
+    },
+  );
+}
+
+//вернуть выполненную задачу обратно в работу (снять галочку)
+export function restoreTask(
+  id: number,
+) {
+  return apiRequest<Task>(
+    `/tasks/${id}/restore`,
     {
       method: "POST",
     },

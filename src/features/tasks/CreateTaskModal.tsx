@@ -10,15 +10,20 @@ import "./CreateTaskModal.css";
 interface CreateTaskModalProps {
   onClose: () => void;
   onCreate: (task: CreateTaskRequest) => void;
+  //необязательно: чем заполнить поля сразу (например, после ввода в строке «Добавить задачу»)
+  initialTitle?: string;
+  initialDate?: string;
 }
 
 export default function CreateTaskModal({
   onClose,
   onCreate,
+  initialTitle = "",
+  initialDate = "",
 }: CreateTaskModalProps) {
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(initialDate);
   const [difficulty, setDifficulty] =
     useState<TaskDifficulty | "">("");
   const [category, setCategory] = useState("");

@@ -1,97 +1,102 @@
 import { useState } from "react";
 
-
 import CreateTaskModal from "../../features/tasks/CreateTaskModal";
 import TaskList from "../../features/tasks/TaskList";
-import { mockTasks } from "../../mocks/tasks";
-
-import type {
-  Task,
-  CreateTaskRequest,
-} from "../../types/task";
+import useTasks from "../../features/tasks/useTasks";
+import CampfireCard from "../../features/campfire/CampfireCard";
+import {
+  countBurnedToday,
+  toDateString,
+} from "../../features/tasks/taskUtils";
 
 import "./HomePage.css";
 
-
+// Главная страница (View).
+// Данные и действия с задачами берёт из контроллера useTasks,
+// а сама только раскладывает блоки: список задач и костёр.
 
 export default function HomePage() {
 
+  const {
+    tasks,
+    isLoading,
+    error,
+    reloadTasks,
+    clearError,
+    handleCreateTask,
+    handleToggleComplete,
+    handleDeleteTask,
+    handleBurnTask,
+  } = useTasks();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  //название из строки «Добавить задачу», с которым открывается форма
+  const [quickTitle, setQuickTitle] = useState("");
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
-
-  function handleCreateTask(data: CreateTaskRequest) {
-  const newTask: Task = {
-    id: Date.now(),
-
-    title: data.title,
-    description: data.description,
-    date: data.date,
-    difficulty: data.difficulty,
-    category: data.category,
-
-    status: "active",
-
-    createdAt: new Date().toISOString(),
-    completedAt: null,
-  };
-
-  setTasks((currentTasks) => [
-    ...currentTasks,
-    newTask,
-  ]);
-}
+  function openModal(title = "") {
+    setQuickTitle(title);
+    setIsModalOpen(true);
+  }
 
 const today = new Date();
 
 const formattedDate = today.toLocaleDateString("ru-RU", {
+  weekday: "long",
   day: "numeric",
   month: "long",
-  year: "numeric",
 });
 
-  return (
+//«среда, 14 октября» → «Среда, 14 октября»
+const capitalizedDate =
+  formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
-    
+  return (
     <div className="home-page">
       <div className="home-date">
+        <div>
+          <h1>Хороший день начинается с малого</h1>
+          <p>{capitalizedDate} · Разожгите фокус и оставьте лишнее в огне.</p>
+        </div>
 
-       <h2>{formattedDate}</h2>
-
+        <button
+          type="button"
+          className="home-add-button"
+          onClick={() => openModal()}
+        >
+          + Новая задача
+        </button>
       </div>
 
       <div className="home-content">
         <section className="tasks-section">
           <div className="tasks-header">
-            <h2>Задачи</h2>
-
-<button
-  type="button"
-  onClick={() => setIsModalOpen(true)}
->
-  Добавить задачу
-</button>
+            <h2>Ваши задачи, без спешки</h2>
           </div>
 
-          <TaskList tasks={tasks} />
+          <TaskList
+            tasks={tasks}
+            isLoading={isLoading}
+            error={error}
+            onRetry={() => void reloadTasks()}
+            onCloseError={clearError}
+            onToggleComplete={(id) => void handleToggleComplete(id)}
+            onDelete={(id) => void handleDeleteTask(id)}
+            onQuickAdd={(title) => openModal(title)}
+          />
         </section>
-        //просто используем заглушку для нулевой карточки
-        <section className="campfire-section">
-          <h2>Костёр</h2>
 
-          <div>
-            🔥
-          </div>
-
-          <p>Брёвен сегодня: 0</p>
-        </section>
+        <CampfireCard
+          logsToday={countBurnedToday(tasks)}
+          onBurnTask={handleBurnTask}
+        />
       </div>
 {isModalOpen && (
   <CreateTaskModal
     onClose={() => setIsModalOpen(false)}
-    onCreate={handleCreateTask}
+    onCreate={(data) => void handleCreateTask(data)}
+    initialTitle={quickTitle}
+    initialDate={quickTitle ? toDateString(today) : ""}
   />
 )}
     </div>

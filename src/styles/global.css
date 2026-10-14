@@ -1,8 +1,53 @@
+/* общие цвета и размеры — используются во всех компонентах через var(--...) */
+:root {
+  --color-bg: #f4f0e6;
+  --color-surface: #fffbf3;
+  --color-surface-muted: #f6f1e5;
+  --color-border: #ebe3d3;
+  --color-border-strong: #ddd3bf;
+
+  --color-text: #2e2a23;
+  --color-muted: #8a8274;
+  --color-soft: #b9b1a2;
+
+  --color-accent: #c0613f;
+  --color-accent-hover: #a9522f;
+  --color-accent-soft: #f6e3da;
+
+  --color-olive: #66785f;
+  --color-olive-dark: #55654e;
+  --color-sage: #e6ebda;
+
+  --color-danger: #c94b4b;
+
+  --shadow: 0 1px 2px rgba(60, 50, 30, 0.04), 0 4px 14px rgba(60, 50, 30, 0.04);
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: "Manrope", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+
+  background-color: var(--color-bg);
+  color: var(--color-text);
+
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
