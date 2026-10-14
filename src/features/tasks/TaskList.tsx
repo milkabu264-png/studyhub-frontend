@@ -198,7 +198,7 @@ export default function TaskList({
 
       <div className="task-hint">
         <span>⠿</span>
-        <span>Готово? Потяните задачу за ⠿ и перетащите в костёр справа.</span>
+                <span>Готово? Отметьте задачу галочкой или перетащите её в костёр справа.</span>
         <span>→</span>
       </div>
     </div>

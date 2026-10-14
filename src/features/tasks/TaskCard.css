@@ -194,3 +194,23 @@
     display: none;
   }
 }
+
+/* активную задачу можно взять мышкой и перетащить в костёр */
+.task-card[draggable="true"] {
+  cursor: grab;
+}
+
+.task-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* на чекбоксе и кнопке меню — обычный курсор */
+.task-card-checkbox,
+.task-card-menu {
+  cursor: pointer;
+}
+
+/* строку сейчас перетаскивают */
+.task-card-dragging {
+  opacity: 0.4;
+}

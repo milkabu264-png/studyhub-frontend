@@ -54,7 +54,26 @@ export default function CampfireCard({
 
   const campfire = getCampfire(logsToday);
 
-  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    //над костром держат задачу — разрешаем её бросить.
+  //Без preventDefault() браузер считает, что сюда ничего бросать нельзя
+  function handleDragOver(event: DragEvent<HTMLElement>) {
+    if (!event.dataTransfer.types.includes(TASK_DRAG_TYPE)) {
+      return;
+    }
+
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setIsHovered(true);
+  }
+
+  //курсор ушёл с карточки костра (а не просто перешёл на её картинку или текст)
+  function handleDragLeave(event: DragEvent<HTMLElement>) {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setIsHovered(false);
+    }
+  }
+
+  function handleDrop(event: DragEvent<HTMLElement>) {
     event.preventDefault();
     setIsHovered(false);
 
@@ -70,7 +89,16 @@ export default function CampfireCard({
   }
 
   return (
-    <section className="campfire-section">
+        //задачу можно бросить на любое место карточки костра
+    <section
+      className={
+        isHovered ? "campfire-section campfire-section-hovered" : "campfire-section"
+      }
+      onDragEnter={handleDragOver}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <h2>У вашего костра</h2>
 
       <div
@@ -123,14 +151,10 @@ export default function CampfireCard({
 
       <div
         className={isHovered ? "campfire-drop campfire-drop-active" : "campfire-drop"}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsHovered(true);
-        }}
-        onDragLeave={() => setIsHovered(false)}
-        onDrop={handleDrop}
       >
-        Перетащите сюда готовую задачу
+        {isHovered
+          ? "Отпустите — задача сгорит"
+          : "Перетащите сюда задачу или отметьте её галочкой"}
       </div>
     </section>
   );

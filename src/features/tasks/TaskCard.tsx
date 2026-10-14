@@ -52,20 +52,33 @@ export default function TaskCard({
     };
   }, [isMenuOpen]);
 
+  const [isDragging, setIsDragging] = useState(false);
+
+  //задачу можно сжечь двумя способами: галочкой или перетащив строку в костёр.
+  //Перетаскивать можно всю строку, а не только ручку ⠿
   function handleDragStart(event: DragEvent<HTMLElement>) {
     event.dataTransfer.setData(TASK_DRAG_TYPE, String(task.id));
+    //запасной формат — некоторые браузеры (Firefox) без text/plain не начинают перетаскивание
+    event.dataTransfer.setData("text/plain", task.title);
     event.dataTransfer.effectAllowed = "move";
+    setIsDragging(true);
   }
+
+  const classNames = ["task-card"];
+
+  if (isCompleted) classNames.push("task-card-completed");
+  if (isDragging) classNames.push("task-card-dragging");
 
   return (
     <article
-      className={isCompleted ? "task-card task-card-completed" : "task-card"}
+      className={classNames.join(" ")}
       title={task.description ?? undefined}
+      draggable={!isCompleted}
+      onDragStart={handleDragStart}
+      onDragEnd={() => setIsDragging(false)}
     >
       <span
         className="task-card-handle"
-        draggable={!isCompleted}
-        onDragStart={handleDragStart}
         title={isCompleted ? undefined : "Перетащите в костёр"}
       >
         ⠿
