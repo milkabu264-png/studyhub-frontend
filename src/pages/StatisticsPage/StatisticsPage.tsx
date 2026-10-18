@@ -1,6 +1,7 @@
 import ActivityChart from "../../features/statistics/ActivityChart";
 import BarList from "../../features/statistics/BarList";
 import StatCard from "../../features/statistics/StatCard";
+import StreakBanner from "../../features/statistics/StreakBanner";
 import useStatistics from "../../features/statistics/useStatistics";
 import { PERIOD_LABELS } from "../../features/statistics/statisticsUtils";
 import { DIFFICULTY_LABELS, plural } from "../../features/tasks/taskUtils";
@@ -91,6 +92,11 @@ function StatisticsPage() {
               hint="из задач, срок которых прошёл"
             />
           </section>
+
+          <StreakBanner
+            streakDays={statistics.streakDays}
+            bestDay={statistics.bestDay}
+          />
 
           <div className="statistics-panels">
             <section className="statistics-panel statistics-panel-wide">
