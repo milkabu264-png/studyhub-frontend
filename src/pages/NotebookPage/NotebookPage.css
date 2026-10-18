@@ -1,0 +1,147 @@
+.notebook-page {
+  width: 100%;
+}
+
+.notebook-header {
+  margin-bottom: 28px;
+}
+
+.notebook-header h1 {
+  margin: 0 0 8px;
+
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.notebook-header p {
+  margin: 0;
+
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* слева форма, справа записи */
+.notebook-content {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 20px;
+
+  align-items: start;
+}
+
+/* форма не уезжает при прокрутке длинного списка */
+.notebook-content > .note-form {
+  position: sticky;
+  top: 20px;
+}
+
+.notebook-notes {
+  padding: 20px;
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.notebook-notes-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 16px;
+}
+
+.notebook-notes-header h2 {
+  margin: 0;
+
+  font-size: 18px;
+}
+
+/* счётчик записей рядом с заголовком */
+.notebook-notes-header span {
+  padding: 2px 9px;
+
+  border-radius: 999px;
+  background-color: var(--color-sage);
+
+  font-size: 12px;
+  font-weight: 700;
+  color: #59634a;
+}
+
+.notebook-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.notebook-empty {
+  margin: 0;
+  padding: 32px 0;
+
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.notebook-skeleton {
+  height: 150px;
+
+  border-radius: 14px;
+  background: linear-gradient(90deg, #f6f1e6 0%, #fbf7ee 50%, #f6f1e6 100%);
+  background-size: 200% 100%;
+
+  animation: notebook-skeleton 1.2s ease-in-out infinite;
+}
+
+@keyframes notebook-skeleton {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+.notebook-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-bottom: 12px;
+  padding: 8px 12px;
+
+  border-radius: 8px;
+  background-color: var(--color-accent-soft);
+
+  font-size: 13px;
+  color: #8a3f26;
+}
+
+.notebook-error span {
+  flex: 1;
+}
+
+.notebook-error button {
+  padding: 0;
+
+  border: none;
+  background: none;
+
+  font-weight: 700;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .notebook-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .notebook-content > .note-form {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .notebook-header h1 {
+    font-size: 24px;
+  }
+}
