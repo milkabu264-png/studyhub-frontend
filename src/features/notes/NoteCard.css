@@ -1,0 +1,133 @@
+.note-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 16px;
+
+  background-color: #f6efdc;
+  border: 1px solid #eadfc4;
+  border-radius: 14px;
+
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.note-card:hover {
+  box-shadow: 0 6px 18px rgba(60, 50, 30, 0.08);
+  transform: translateY(-1px);
+}
+
+/* закреплённая заметка — с оливковой полоской слева */
+.note-card-pinned {
+  border-left: 4px solid var(--color-olive);
+}
+
+.note-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.note-card h3 {
+  margin: 4px 0 0;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* кнопки в правом верхнем углу */
+.note-card-actions {
+  display: flex;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.note-card-button {
+  display: grid;
+  place-items: center;
+
+  width: 28px;
+  height: 28px;
+
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.note-card-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--color-text);
+}
+
+.note-card-pinned .note-card-pin {
+  color: var(--color-olive);
+}
+
+.note-card-delete:hover {
+  color: var(--color-danger);
+}
+
+/* «Удалить» появляется при наведении на карточку */
+.note-card-hidden {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.note-card:hover .note-card-hidden,
+.note-card-hidden:focus-visible {
+  opacity: 1;
+}
+
+/* на телефоне наведения нет — показываем кнопку всегда */
+@media (hover: none) {
+  .note-card-hidden {
+    opacity: 1;
+  }
+}
+
+/* текст обрезаем до 4 строк, чтобы карточки были одной высоты */
+.note-card-text {
+  margin: 0;
+
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6f6758;
+  white-space: pre-line;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-top: auto;
+  padding-top: 4px;
+
+  font-size: 12px;
+}
+
+.note-card-category {
+  padding: 3px 9px;
+
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.7);
+
+  font-weight: 600;
+  color: #6f6550;
+}
+
+.note-card-date {
+  margin-left: auto;
+
+  color: var(--color-muted);
+  white-space: nowrap;
+}
