@@ -64,7 +64,12 @@ export default function NoteCard({
             className="note-card-button note-card-hidden note-card-delete"
             aria-label="Удалить заметку"
             title="Удалить"
-            onClick={() => onDelete(note.id)}
+            onClick={() => {
+              //спрашиваем, чтобы не удалить заметку случайным кликом
+              if (window.confirm("Удалить эту заметку?")) {
+                onDelete(note.id);
+              }
+            }}
           >
             <Icon path={ICONS.delete} />
           </button>

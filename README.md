@@ -22,6 +22,7 @@ Backend проекта — C# + ASP.NET Core.
 | Как выглядит состояние костра | `src/types/campfire.ts` |
 | Как frontend ожидает ошибки | `src/types/api.ts` |
 | Какие запросы задач вызывает frontend | `src/services/taskApi.ts` |
+| Как выглядит заметка и что отправляется при её создании | `src/types/note.ts` |
 | Как frontend получает состояние костра | `src/services/campfireApi.ts` |
 | Как устроен общий запрос к backend | `src/services/api.ts` |
 | Какие данные используются до подключения backend | `src/mocks/` |
@@ -64,7 +65,7 @@ src/
 | Слой | Где | Что делает |
 |---|---|---|
 | **Model** | `src/types/`, `src/services/` | Описывает данные и отправляет запросы к backend |
-| **Controller** | `src/features/tasks/useTasks.ts` | Загружает задачи, хранит их и обрабатывает действия пользователя |
+| **Controller** | `src/features/tasks/useTasks.ts`, `src/features/notes/useNotes.ts` | Загружает задачи, хранит их и обрабатывает действия пользователя |
 | **View** | `src/features/*/*.tsx`, `src/pages/` | Показывает данные и вызывает функции контроллера |
 
 Логика без React (вкладки, прогресс, подписи дат, уровень костра) лежит отдельно:
@@ -85,6 +86,10 @@ src/
 | POST | `/api/tasks/{id}/restore` | — | `Task` со статусом `active` |
 | POST | `/api/tasks/{id}/fail` | — | `Task` со статусом `failed` |
 | GET | `/api/campfire` | — | `Campfire` |
+| GET | `/api/notes` | — | `Note[]` — все заметки пользователя |
+| POST | `/api/notes` | `CreateNoteRequest` | `Note` |
+| PUT | `/api/notes/{id}` | `UpdateNoteRequest` | `Note` (в том числе закрепить / открепить) |
+| DELETE | `/api/notes/{id}` | — | `204` |
 
 Ошибки frontend ждёт в виде JSON с полем `message` (см. `src/types/api.ts`).
 
