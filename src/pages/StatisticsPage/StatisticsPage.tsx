@@ -1,3 +1,4 @@
+import ActivityChart from "../../features/statistics/ActivityChart";
 import BarList from "../../features/statistics/BarList";
 import StatCard from "../../features/statistics/StatCard";
 import useStatistics from "../../features/statistics/useStatistics";
@@ -92,6 +93,20 @@ function StatisticsPage() {
           </section>
 
           <div className="statistics-panels">
+            <section className="statistics-panel statistics-panel-wide">
+              <h2>Активность</h2>
+              <p className="statistics-panel-hint">
+                {statistics.activityUnit === "week"
+                  ? "Выполнено задач по неделям, последние 12 недель"
+                  : `Выполнено задач по дням, последние ${statistics.activity.length} дней`}
+              </p>
+
+              <ActivityChart
+                activity={statistics.activity}
+                unit={statistics.activityUnit}
+              />
+            </section>
+
             <section className="statistics-panel">
               <h2>По сложности</h2>
               <p className="statistics-panel-hint">Выполнено задач</p>
@@ -104,6 +119,23 @@ function StatisticsPage() {
                   { label: DIFFICULTY_LABELS.hard, value: statistics.byDifficulty.hard },
                 ]}
               />
+            </section>
+
+            <section className="statistics-panel">
+              <h2>По категориям</h2>
+              <p className="statistics-panel-hint">Выполнено задач</p>
+
+              {statistics.byCategory.length === 0 ? (
+                <p className="statistics-panel-empty">За этот период пока ничего не сгорело</p>
+              ) : (
+                <BarList
+                  ariaLabel="Выполнено задач по категориям"
+                  items={statistics.byCategory.map((item) => ({
+                    label: item.category,
+                    value: item.completed,
+                  }))}
+                />
+              )}
             </section>
           </div>
         </>

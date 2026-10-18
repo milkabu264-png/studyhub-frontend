@@ -177,3 +177,16 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.statistics-panel-empty {
+  margin: 0;
+  padding: 12px 0;
+
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+/* график активности — на всю ширину */
+.statistics-panel-wide {
+  grid-column: 1 / -1;
+}
