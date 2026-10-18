@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import ActivityChart from "../../features/statistics/ActivityChart";
 import BarList from "../../features/statistics/BarList";
 import StatCard from "../../features/statistics/StatCard";
@@ -24,6 +26,10 @@ function StatisticsPage() {
     error,
     reloadStatistics,
   } = useStatistics();
+
+  //за выбранный период нет ни одной задачи
+  const isEmpty =
+    statistics.completed + statistics.failed + statistics.active === 0;
 
   return (
     <div className="statistics-page">
@@ -92,6 +98,17 @@ function StatisticsPage() {
               hint="из задач, срок которых прошёл"
             />
           </section>
+
+          {isEmpty && (
+            <div className="statistics-empty">
+              <p>
+                За этот период задач пока нет. Добавьте задачу на главной —
+                и здесь появятся первые цифры.
+              </p>
+
+              <Link to="/">Перейти к задачам</Link>
+            </div>
+          )}
 
           <StreakBanner
             streakDays={statistics.streakDays}

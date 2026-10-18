@@ -190,3 +190,36 @@
 .statistics-panel-wide {
   grid-column: 1 / -1;
 }
+
+/* подсказка, когда за период нет задач */
+.statistics-empty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+
+  margin-bottom: 20px;
+  padding: 14px 18px;
+
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 14px;
+
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.statistics-empty p {
+  flex: 1;
+  min-width: 220px;
+  margin: 0;
+}
+
+.statistics-empty a {
+  font-weight: 700;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.statistics-empty a:hover {
+  text-decoration: underline;
+}
