@@ -1,0 +1,66 @@
+/* «Удалить аккаунт» — спокойная текстовая кнопка, чтобы не нажать её случайно */
+.account-delete-button {
+  padding: 10px 4px;
+
+  border: none;
+  background: none;
+
+  font-weight: 600;
+  color: var(--color-danger);
+  cursor: pointer;
+}
+
+.account-delete-button:hover {
+  text-decoration: underline;
+}
+
+.account-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 16px;
+
+  border: 1px solid #ebc3bd;
+  border-radius: 12px;
+  background-color: #fbecea;
+}
+
+.account-confirm p {
+  margin: 0;
+
+  font-size: 13px;
+  color: #7a3a33;
+}
+
+.account-confirm input {
+  max-width: 240px;
+  padding: 9px 12px;
+
+  border: 1px solid #e0b3ac;
+  border-radius: 10px;
+  background-color: white;
+
+  outline: none;
+}
+
+.account-confirm input:focus {
+  border-color: var(--color-danger);
+}
+
+.account-delete-confirm {
+  padding: 10px 18px;
+
+  border: none;
+  border-radius: 10px;
+  background-color: var(--color-danger);
+
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+}
+
+.account-delete-confirm:disabled {
+  background-color: #e3b9b3;
+  cursor: default;
+}
