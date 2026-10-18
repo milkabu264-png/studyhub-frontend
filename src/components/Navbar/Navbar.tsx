@@ -1,4 +1,5 @@
 import {NavLink} from 'react-router-dom';
+import useSettings from "../../features/settings/useSettings";
 import "./Navbar.css";
 
 //маленькие линейные иконки для пунктов меню
@@ -29,6 +30,10 @@ function Icon({ path }: { path: string }) {
 }
 
 export default function Navbar() {
+  //имя берём из настроек — после сохранения в «Аккаунте» оно сразу обновится здесь
+  const { settings } = useSettings();
+  const name = settings.profile.name;
+
     return (
     <header className="navbar">
       <div className="navbar-logo">
@@ -60,6 +65,15 @@ export default function Navbar() {
           Настройки
         </NavLink>
       </nav>
+
+      {name && (
+        <NavLink to="/settings" className="navbar-user" title="Настройки профиля">
+          <span className="navbar-user-avatar" aria-hidden="true">
+            {name.charAt(0).toUpperCase()}
+          </span>
+          {name}
+        </NavLink>
+      )}
     </header>
   );
 }

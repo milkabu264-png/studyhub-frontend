@@ -102,3 +102,48 @@
     overflow-x: auto;
   }
 }
+
+/* имя пользователя справа в шапке */
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-left: auto;
+  padding: 4px 12px 4px 4px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  text-decoration: none;
+}
+
+.navbar-user:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.navbar-user-avatar {
+  display: grid;
+  place-items: center;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 50%;
+  background-color: var(--color-surface);
+
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* на телефоне — в правом верхнем углу, рядом с логотипом */
+@media (max-width: 900px) {
+  .navbar-user {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+  }
+}
