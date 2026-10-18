@@ -9,6 +9,8 @@ import {
   sortNotes,
 } from "../../features/notes/noteUtils";
 
+import type { Note } from "../../types/note";
+
 import "./NotebookPage.css";
 
 // Страница «Блокнот» (View).
@@ -23,11 +25,15 @@ function NotebookPage() {
     reloadNotes,
     clearError,
     handleCreateNote,
+    handleUpdateNote,
     handleTogglePin,
     handleDeleteNote,
   } = useNotes();
 
   const [search, setSearch] = useState("");
+
+  //заметка, открытая в форме для редактирования
+  const [editingNote, setEditingNote] = useState<Note | null>(null);
 
   //выбранная категория; null — показываем все
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -48,7 +54,17 @@ function NotebookPage() {
       </div>
 
       <div className="notebook-content">
-        <NoteForm onCreate={(data) => void handleCreateNote(data)} />
+        {/* key пересоздаёт форму, когда выбрали другую заметку, — поля заполняются заново */}
+        <NoteForm
+          key={editingNote?.id ?? "new"}
+          editingNote={editingNote}
+          onCreate={(data) => void handleCreateNote(data)}
+          onUpdate={(id, data) => {
+            void handleUpdateNote(id, data);
+            setEditingNote(null);
+          }}
+          onCancelEdit={() => setEditingNote(null)}
+        />
 
         <section className="notebook-notes">
           <div className="notebook-notes-header">
@@ -118,7 +134,18 @@ function NotebookPage() {
                   key={note.id}
                   note={note}
                   onTogglePin={handleTogglePin}
-                  onDelete={(id) => void handleDeleteNote(id)}
+                  onEdit={(item) => {
+                    setEditingNote(item);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  onDelete={(id) => {
+                    void handleDeleteNote(id);
+
+                    //удалили заметку, которую редактировали, — закрываем редактирование
+                    if (editingNote?.id === id) {
+                      setEditingNote(null);
+                    }
+                  }}
                 />
               ))}
             </div>

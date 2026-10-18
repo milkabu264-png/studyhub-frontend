@@ -5,12 +5,14 @@ import "./NoteCard.css";
 interface NoteCardProps {
   note: Note;
   onTogglePin: (note: Note) => void;
+  onEdit: (note: Note) => void;
   onDelete: (id: number) => void;
 }
 
 //линейные иконки для кнопок карточки
 const ICONS = {
   pin: "M9 4h6l-1 6 3 3v2H7v-2l3-3-1-6ZM12 15v5",
+  edit: "M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4",
   delete: "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3",
 };
 
@@ -37,6 +39,7 @@ function Icon({ path, filled = false }: { path: string; filled?: boolean }) {
 export default function NoteCard({
   note,
   onTogglePin,
+  onEdit,
   onDelete,
 }: NoteCardProps) {
   return (
@@ -46,6 +49,16 @@ export default function NoteCard({
         {note.title && <h3>{note.title}</h3>}
 
         <div className="note-card-actions">
+          <button
+            type="button"
+            className="note-card-button note-card-hidden"
+            aria-label="Изменить заметку"
+            title="Изменить"
+            onClick={() => onEdit(note)}
+          >
+            <Icon path={ICONS.edit} />
+          </button>
+
           <button
             type="button"
             className="note-card-button note-card-hidden note-card-delete"

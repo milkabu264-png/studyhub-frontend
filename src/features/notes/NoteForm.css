@@ -88,3 +88,20 @@
 .note-form-submit:hover {
   background-color: var(--color-accent-hover);
 }
+
+/* в режиме редактирования форма подсвечена оливковой рамкой */
+.note-form-editing {
+  border-color: var(--color-olive);
+  box-shadow: 0 0 0 3px var(--color-sage);
+}
+
+.note-form-cancel {
+  padding: 10px 16px;
+
+  border: none;
+  border-radius: 10px;
+  background-color: #e8e3d6;
+
+  font-weight: 600;
+  cursor: pointer;
+}
