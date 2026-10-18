@@ -1,0 +1,107 @@
+/* общие стили блоков на странице настроек */
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  padding: 22px;
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.settings-section h2 {
+  margin: 0;
+
+  font-size: 18px;
+}
+
+.settings-section-hint {
+  margin: -10px 0 0;
+
+  font-size: 13px;
+  color: var(--color-muted);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-field input {
+  width: 100%;
+  padding: 10px 12px;
+
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background-color: white;
+
+  font-weight: 400;
+  outline: none;
+}
+
+.settings-field input:focus {
+  border-color: var(--color-olive);
+}
+
+.settings-field .settings-input-error {
+  border-color: var(--color-danger);
+}
+
+.settings-error-text {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-danger);
+}
+
+/* строка с кнопками внизу блока */
+.settings-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.settings-button {
+  padding: 10px 18px;
+
+  border: none;
+  border-radius: 10px;
+  background-color: var(--color-accent);
+
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+}
+
+.settings-button:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.settings-button:disabled {
+  background-color: #d8cfc0;
+  cursor: default;
+}
+
+.settings-button-secondary {
+  background-color: #e8e3d6;
+  color: var(--color-text);
+}
+
+.settings-button-secondary:hover {
+  background-color: #ddd6c6;
+}
+
+/* «Сохранено» рядом с кнопкой */
+.settings-saved {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-olive);
+}
