@@ -1,0 +1,54 @@
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bar-list-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 12px;
+
+  font-size: 13px;
+}
+
+.bar-list-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* серая дорожка и зелёная полоса поверх; скругление только у конца полосы */
+.bar-list-track {
+  height: 12px;
+
+  border-radius: 0 4px 4px 0;
+  background-color: var(--color-surface-muted);
+}
+
+.bar-list-fill {
+  display: block;
+  height: 100%;
+
+  border-radius: 0 4px 4px 0;
+  background-color: var(--color-chart);
+
+  transition: width 0.4s ease;
+}
+
+.bar-list-value {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar-list-fill {
+    transition: none;
+  }
+}
