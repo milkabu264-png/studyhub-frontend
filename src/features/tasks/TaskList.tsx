@@ -1,58 +1,71 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 
-import type { Task } from "../../types/task";
+import type { Task, TaskDifficulty, TaskStatus } from "../../types/task";
 import TaskCard from "./TaskCard";
 import {
-  TASK_TABS,
-  countTasksByTab,
-  getProgress,
-  getTasksForTab,
+  DEFAULT_FILTERS,
+  DIFFICULTY_LABELS,
+  STATUS_LABELS,
+  getDayProgress,
+  getVisibleTasks,
+  hasActiveFilters,
   plural,
 } from "./taskUtils";
-import type { TaskTab } from "./taskUtils";
+import type { TaskFilters, TaskRange, TaskSort } from "./taskUtils";
 import "./TaskList.css";
 
 interface TaskListProps {
+  //все задачи пользователя — список сам выбирает нужные по дню и фильтрам
   tasks: Task[];
-  onToggleComplete: (id: number) => void;
-  onDelete: (id: number) => void;
-  //Enter в строке «Добавить задачу» — дальше главная откроет форму с этим названием
-  onQuickAdd: (title: string) => void;
-  //задачи ещё загружаются — показываем заглушки строк
+  selectedDate: string;
+  //на прошедший день задачи добавлять нельзя
+  canAdd: boolean;
   isLoading?: boolean;
-  //текст ошибки от сервера
   error?: string | null;
   onRetry?: () => void;
-  onCloseError?: () => void;
+  onComplete: (task: Task, from: HTMLElement) => void;
+  onDropToFire: (task: Task) => void;
+  onFail: (task: Task) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
+  //Enter в строке «Добавить задачу» — главная откроет форму с этим названием
+  onQuickAdd: (title: string) => void;
 }
+
+const RANGES: { range: TaskRange; label: string }[] = [
+  { range: "day", label: "День" },
+  { range: "week", label: "Неделя" },
+  { range: "overdue", label: "Просрочено" },
+];
 
 export default function TaskList({
   tasks,
-  onToggleComplete,
-  onDelete,
-  onQuickAdd,
+  selectedDate,
+  canAdd,
   isLoading = false,
   error = null,
   onRetry,
-  onCloseError,
+  onComplete,
+  onDropToFire,
+  onFail,
+  onEdit,
+  onDelete,
+  onQuickAdd,
 }: TaskListProps) {
-  const [activeTab, setActiveTab] = useState<TaskTab>("inProgress");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<TaskFilters>(DEFAULT_FILTERS);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [newTitle, setNewTitle] = useState("");
 
-  const counts = countTasksByTab(tasks);
-  const progress = getProgress(tasks);
+  const visibleTasks = getVisibleTasks(tasks, selectedDate, filters);
+  const progress = getDayProgress(tasks, selectedDate);
 
-  //задачи текущей вкладки + фильтр поиска
-  const visibleTasks = getTasksForTab(tasks, activeTab).filter((task) =>
-    task.title.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  //сколько дополнительных фильтров включено — число на кнопке «Фильтры»
+  const extraFilters =
+    Number(filters.status !== "all") + Number(filters.difficulty !== "all") + Number(filters.sort !== "default");
 
-  function closeSearch() {
-    setIsSearchOpen(false);
-    setSearch("");
+  function setFilter<K extends keyof TaskFilters>(key: K, value: TaskFilters[K]) {
+    setFilters({ ...filters, [key]: value });
   }
 
   function handleQuickAdd(event: FormEvent<HTMLFormElement>) {
@@ -66,79 +79,109 @@ export default function TaskList({
     setNewTitle("");
   }
 
+  function getEmptyText(): string {
+    if (hasActiveFilters(filters)) return "По выбранным фильтрам задач нет";
+    if (tasks.length === 0) return "У вас пока нет задач. Создайте первую";
+    return "На этот день задач нет";
+  }
+
   return (
     <div className="task-list-wrapper">
       <div className="task-list-toolbar">
-        {isSearchOpen ? (
-          <div className="task-search">
-            <input
-              autoFocus
-              type="text"
-              placeholder="Найти задачу…"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") closeSearch();
-              }}
-            />
-
+        <div className="task-tabs" role="group" aria-label="Срок">
+          {RANGES.map(({ range, label }) => (
             <button
+              key={range}
               type="button"
-              className="task-icon-button"
-              aria-label="Закрыть поиск"
-              onClick={closeSearch}
+              aria-pressed={filters.range === range}
+              className={filters.range === range ? "task-tab task-tab-active" : "task-tab"}
+              onClick={() => setFilter("range", range)}
             >
-              ✕
+              {label}
             </button>
-          </div>
-        ) : (
-          <>
-            <div className="task-tabs">
-              {TASK_TABS.map(({ tab, label }) => (
-                <button
-                  key={tab}
-                  type="button"
-                  className={
-                    activeTab === tab ? "task-tab task-tab-active" : "task-tab"
-                  }
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {label} · {counts[tab]}
-                </button>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className={isFiltersOpen ? "task-filter-toggle task-filter-toggle-open" : "task-filter-toggle"}
+          aria-expanded={isFiltersOpen}
+          onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+        >
+          Фильтры
+          {extraFilters > 0 && <span className="task-filter-count">{extraFilters}</span>}
+        </button>
+      </div>
+
+      {/* дополнительные фильтры и сортировка (п. 1.2.7) */}
+      {isFiltersOpen && (
+        <div className="task-filters">
+          <label>
+            Статус
+            <select
+              value={filters.status}
+              onChange={(event) => setFilter("status", event.target.value as "all" | TaskStatus)}
+            >
+              <option value="all">Все</option>
+              {(Object.keys(STATUS_LABELS) as TaskStatus[]).map((status) => (
+                <option key={status} value={status}>{STATUS_LABELS[status]}</option>
               ))}
-            </div>
+            </select>
+          </label>
 
-            <button
-              type="button"
-              className="task-icon-button"
-              aria-label="Поиск по задачам"
-              onClick={() => setIsSearchOpen(true)}
+          <label>
+            Сложность
+            <select
+              value={filters.difficulty}
+              onChange={(event) => setFilter("difficulty", event.target.value as "all" | TaskDifficulty)}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.5-3.5" />
-              </svg>
-            </button>
-          </>
-        )}
-      </div>
+              <option value="all">Любая</option>
+              {(Object.keys(DIFFICULTY_LABELS) as TaskDifficulty[]).map((difficulty) => (
+                <option key={difficulty} value={difficulty}>{DIFFICULTY_LABELS[difficulty]}</option>
+              ))}
+            </select>
+          </label>
 
-      <div className="task-progress">
-        <div className="task-progress-labels">
-          <span>
-            {progress.done} из {progress.total}{" "}
-            {plural(progress.total, ["задачи", "задач", "задач"])} завершены
-          </span>
-          <strong>{progress.percent}%</strong>
-        </div>
+          <label>
+            Сортировка
+            <select
+              value={filters.sort}
+              onChange={(event) => setFilter("sort", event.target.value as TaskSort)}
+            >
+              <option value="default">По дате</option>
+              <option value="difficulty">По сложности</option>
+              <option value="status">По статусу</option>
+            </select>
+          </label>
 
-        <div className="task-progress-track">
-          <div
-            className="task-progress-fill"
-            style={{ width: `${progress.percent}%` }}
-          />
+          <button
+            type="button"
+            className="task-filters-reset"
+            onClick={() => setFilters(DEFAULT_FILTERS)}
+          >
+            Сбросить
+          </button>
         </div>
-      </div>
+      )}
+
+      {filters.range === "day" && progress.total > 0 && (
+        <div className="task-progress">
+          <div className="task-progress-labels">
+            <span>
+              {progress.done} из {progress.total}{" "}
+              {plural(progress.total, ["задачи", "задач", "задач"])} выполнено
+            </span>
+            <strong>{progress.percent}%</strong>
+          </div>
+
+          <div className="task-progress-track">
+            <div
+              className="task-progress-fill"
+              style={{ width: `${progress.percent}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="task-error" role="alert">
@@ -147,17 +190,6 @@ export default function TaskList({
           {onRetry && (
             <button type="button" onClick={onRetry}>
               Повторить
-            </button>
-          )}
-
-          {onCloseError && (
-            <button
-              type="button"
-              className="task-icon-button"
-              aria-label="Скрыть ошибку"
-              onClick={onCloseError}
-            >
-              ✕
             </button>
           )}
         </div>
@@ -170,36 +202,45 @@ export default function TaskList({
           ))}
         </div>
       ) : visibleTasks.length === 0 ? (
-        <p className="task-list-empty">
-          {search ? "Ничего не нашлось" : "Здесь пока пусто"}
-        </p>
+        !error && <p className="task-list-empty">{getEmptyText()}</p>
       ) : (
         <div className="task-list">
           {visibleTasks.map((task) => (
             <TaskCard
               key={task.id}
               task={task}
-              onToggleComplete={onToggleComplete}
+              showDate={filters.range !== "day"}
+              onComplete={onComplete}
+              onDropToFire={onDropToFire}
+              onFail={onFail}
+              onEdit={onEdit}
               onDelete={onDelete}
             />
           ))}
         </div>
       )}
 
-      <form className="task-quick-add" onSubmit={handleQuickAdd}>
-        <span>+</span>
-        <input
-          type="text"
-          placeholder="Добавить задачу и нажать Enter"
-          value={newTitle}
-          onChange={(event) => setNewTitle(event.target.value)}
-        />
-      </form>
+      {canAdd ? (
+        <form className="task-quick-add" onSubmit={handleQuickAdd}>
+          <span aria-hidden="true">+</span>
+          <input
+            type="text"
+            aria-label="Название новой задачи"
+            placeholder="Добавить задачу и нажать Enter"
+            value={newTitle}
+            onChange={(event) => setNewTitle(event.target.value)}
+          />
+        </form>
+      ) : (
+        <p className="task-quick-add-disabled">
+          Это прошедший день: новые задачи сюда добавить нельзя, но неотмеченные можно отметить.
+        </p>
+      )}
 
       <div className="task-hint">
-        <span>⠿</span>
-                <span>Готово? Отметьте задачу галочкой или перетащите её в костёр справа.</span>
-        <span>→</span>
+        <span aria-hidden="true">⠿</span>
+        <span>Готово? Поставьте галочку или перетащите задачу-бревно в костёр.</span>
+        <span aria-hidden="true">→</span>
       </div>
     </div>
   );
