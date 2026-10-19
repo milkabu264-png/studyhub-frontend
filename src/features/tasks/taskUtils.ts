@@ -1,22 +1,6 @@
-import type { Task, TaskDifficulty } from "../../types/task";
+import type { Task, TaskDifficulty, TaskStatus } from "../../types/task";
 
-// Вспомогательные функции для списка задач.
-// Здесь нет React — только логика над массивом задач,
-// поэтому ей могут пользоваться и главная, и будущая страница задач, и статистика.
-
-export type TaskTab = "inProgress" | "upcoming" | "burned";
-
-//вкладки над списком задач
-
-export const TASK_TABS: { tab: TaskTab; label: string }[] = [
-  { tab: "inProgress", label: "В работе" },
-  { tab: "upcoming", label: "Предстоящие" },
-  { tab: "burned", label: "Сожжённые" },
-];
-
-// Задачи с дедлайном в ближайшие 7 дней (и просроченные) — «В работе»,
-// всё, что дальше, — «Предстоящие».
-const IN_PROGRESS_DAYS = 7;
+// Вспомогательные функции для задач — без React, только логика над массивом.
 
 export const DIFFICULTY_LABELS: Record<TaskDifficulty, string> = {
   easy: "Лёгкая",
@@ -24,100 +8,15 @@ export const DIFFICULTY_LABELS: Record<TaskDifficulty, string> = {
   hard: "Сложная",
 };
 
-// Сколько дней до даты задачи: 0 — сегодня, 1 — завтра, -1 — вчера.
-export function getDaysUntil(date: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+export const STATUS_LABELS: Record<TaskStatus, string> = {
+  active: "Активна",
+  completed: "Выполнена",
+  failed: "Не выполнена",
+};
 
-  const deadline = new Date(`${date}T00:00:00`);
+// ---------- даты ----------
 
-  return Math.round(
-    (deadline.getTime() - today.getTime()) / 86_400_000,
-  );
-}
-
-export function isTaskOverdue(task: Task): boolean {
-  return task.status === "active" && getDaysUntil(task.date) < 0;
-}
-
-// В какую вкладку попадает задача.
-// Проваленные (failed) пока нигде не показываем — для них нет интерфейса.
-export function getTaskTab(task: Task): TaskTab | null {
-  if (task.status === "completed") {
-    return "burned";
-  }
-
-  if (task.status === "failed") {
-    return null;
-  }
-
-  return getDaysUntil(task.date) <= IN_PROGRESS_DAYS
-    ? "inProgress"
-    : "upcoming";
-}
-
-export function getTasksForTab(tasks: Task[], tab: TaskTab): Task[] {
-  return tasks
-    .filter((task) => getTaskTab(task) === tab)
-    .sort((a, b) => a.date.localeCompare(b.date));
-}
-
-export function countTasksByTab(tasks: Task[]): Record<TaskTab, number> {
-  const counts: Record<TaskTab, number> = {
-    inProgress: 0,
-    upcoming: 0,
-    burned: 0,
-  };
-
-  for (const task of tasks) {
-    const tab = getTaskTab(task);
-
-    if (tab) {
-      counts[tab] += 1;
-    }
-  }
-
-  return counts;
-}
-
-// Прогресс: сколько сожжено из задач «В работе» + «Сожжённые».
-export function getProgress(tasks: Task[]) {
-  const counts = countTasksByTab(tasks);
-
-  const done = counts.burned;
-  const total = counts.inProgress + counts.burned;
-  const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-
-  return { done, total, percent };
-}
-
-// «Сегодня», «Завтра», «Вчера» или «7 октября»
-export function getDateLabel(date: string): string {
-  const days = getDaysUntil(date);
-
-  if (days === 0) return "Сегодня";
-  if (days === 1) return "Завтра";
-  if (days === -1) return "Вчера";
-
-  return new Date(`${date}T00:00:00`).toLocaleDateString("ru-RU", {
-    day: "numeric",
-    month: "long",
-  });
-}
-
-// Сколько задач сожжено сегодня — это «брёвна» для костра.
-export function countBurnedToday(tasks: Task[]): number {
-  const today = new Date().toDateString();
-
-  return tasks.filter(
-    (task) =>
-      task.status === "completed" &&
-      task.completedAt !== null &&
-      new Date(task.completedAt).toDateString() === today,
-  ).length;
-}
-
-// Дата в формате YYYY-MM-DD (как в поле date у задачи).
+//Date → "YYYY-MM-DD" по местному времени (так хранится поле date у задачи)
 export function toDateString(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -126,7 +25,162 @@ export function toDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-// Склонение слова после числа: задача / задачи / задач
+export function parseDate(date: string): Date {
+  return new Date(`${date}T00:00:00`);
+}
+
+export function todayString(): string {
+  return toDateString(new Date());
+}
+
+export function addDays(date: string, days: number): string {
+  const result = parseDate(date);
+  result.setDate(result.getDate() + days);
+  return toDateString(result);
+}
+
+//сколько дней до даты: 0 — сегодня, 1 — завтра, -1 — вчера
+export function getDaysUntil(date: string): number {
+  const today = parseDate(todayString());
+  return Math.round((parseDate(date).getTime() - today.getTime()) / 86_400_000);
+}
+
+export function isPastDay(date: string): boolean {
+  return date < todayString();
+}
+
+//просроченная — неотмеченная задача прошедшего дня (п. 1.2.2)
+export function isTaskOverdue(task: Task): boolean {
+  return task.status === "active" && isPastDay(task.date);
+}
+
+//«Сегодня», «Завтра», «Вчера» или «7 октября»
+export function getDateLabel(date: string): string {
+  const days = getDaysUntil(date);
+
+  if (days === 0) return "Сегодня";
+  if (days === 1) return "Завтра";
+  if (days === -1) return "Вчера";
+
+  return parseDate(date).toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+  });
+}
+
+//«Среда, 14 октября» — заголовок выбранного дня
+export function formatDayTitle(date: string): string {
+  const text = parseDate(date).toLocaleDateString("ru-RU", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// ---------- фильтры (п. 1.2.7) ----------
+
+//срок: выбранный день, неделя с выбранного дня или все просроченные
+export type TaskRange = | "day" | "week" | "overdue";
+export type TaskSort = | "default" | "difficulty" | "status";
+
+export interface TaskFilters {
+  status: "all" | TaskStatus;
+  difficulty: "all" | TaskDifficulty;
+  range: TaskRange;
+  sort: TaskSort;
+}
+
+export const DEFAULT_FILTERS: TaskFilters = {
+  status: "all",
+  difficulty: "all",
+  range: "day",
+  sort: "default",
+};
+
+export function hasActiveFilters(filters: TaskFilters): boolean {
+  return filters.status !== "all" || filters.difficulty !== "all" || filters.range !== "day";
+}
+
+const DIFFICULTY_ORDER: Record<TaskDifficulty, number> = { hard: 0, medium: 1, easy: 2 };
+const STATUS_ORDER: Record<TaskStatus, number> = { active: 0, completed: 1, failed: 2 };
+
+//задачи, которые показываются в списке
+export function getVisibleTasks(
+  tasks: Task[],
+  selectedDate: string,
+  filters: TaskFilters,
+): Task[] {
+  const weekEnd = addDays(selectedDate, 6);
+
+  const inRange = tasks.filter((task) => {
+    if (filters.range === "overdue") return isTaskOverdue(task);
+    if (filters.range === "week") return task.date >= selectedDate && task.date <= weekEnd;
+    return task.date === selectedDate;
+  });
+
+  const filtered = inRange.filter(
+    (task) =>
+      (filters.status === "all" || task.status === filters.status) &&
+      (filters.difficulty === "all" || task.difficulty === filters.difficulty),
+  );
+
+  return [...filtered].sort((a, b) => {
+    if (filters.sort === "difficulty") {
+      return DIFFICULTY_ORDER[a.difficulty] - DIFFICULTY_ORDER[b.difficulty];
+    }
+
+    if (filters.sort === "status") {
+      return STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+    }
+
+    //по умолчанию: по дате, внутри дня — сначала активные, потом по времени создания
+    return (
+      a.date.localeCompare(b.date) ||
+      STATUS_ORDER[a.status] - STATUS_ORDER[b.status] ||
+      a.createdAt.localeCompare(b.createdAt)
+    );
+  });
+}
+
+//прогресс выбранного дня: сколько задач уже отмечено выполненными
+export function getDayProgress(tasks: Task[], date: string) {
+  const dayTasks = tasks.filter((task) => task.date === date);
+  const done = dayTasks.filter((task) => task.status === "completed").length;
+  const total = dayTasks.length;
+
+  return { done, total, percent: total === 0 ? 0 : Math.round((done / total) * 100) };
+}
+
+// ---------- календарь ----------
+
+export interface DayMarks {
+  active: number;
+  completed: number;
+  overdue: number;
+}
+
+//для точек в календаре: сколько задач и каких в каждый день
+export function getDayMarks(tasks: Task[]): Map<string, DayMarks> {
+  const marks = new Map<string, DayMarks>();
+
+  for (const task of tasks) {
+    const mark = marks.get(task.date) ?? { active: 0, completed: 0, overdue: 0 };
+
+    if (task.status === "completed") mark.completed += 1;
+    if (task.status === "active") mark.active += 1;
+    if (isTaskOverdue(task)) mark.overdue += 1;
+
+    marks.set(task.date, mark);
+  }
+
+  return marks;
+}
+
+// ---------- текст ----------
+
+//склонение слова после числа: задача / задачи / задач
 export function plural(count: number, forms: [string, string, string]): string {
   const mod10 = count % 10;
   const mod100 = count % 100;

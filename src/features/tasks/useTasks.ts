@@ -4,23 +4,26 @@ import {
   completeTask,
   createTask,
   deleteTask,
+  failTask,
   getTasks,
-  restoreTask,
+  updateTask,
 } from "../../services/taskApi";
-import { USE_MOCKS } from "../../services/api";
-import { mockTasks } from "../../mocks/tasks";
+import type { CompleteTaskResponse } from "../../services/taskApi";
+import { getErrorMessage } from "../../services/api";
+import { failure, success } from "../../shared/result";
+import type { ActionResult } from "../../shared/result";
 
-import type { CreateTaskRequest, Task } from "../../types/task";
+import type { CreateTaskRequest, Task, UpdateTaskRequest } from "../../types/task";
 
 // CONTROLLER задач (C в MVC).
 //
 // Связывает Model (types/task.ts + services/taskApi.ts) и View (TaskList, TaskCard, HomePage):
 //  - загружает задачи;
 //  - хранит их в состоянии;
-//  - обрабатывает действия пользователя: создать, отметить, удалить, сжечь в костре.
+//  - создаёт, изменяет, отмечает и удаляет задачи.
 //
-// Пока VITE_USE_MOCKS=true, всё работает на моках без backend.
-// Когда backend будет готов, достаточно поставить false — запросы уйдут в taskApi.ts.
+// Правило из требований: отмеченную (выполненную или невыполненную) задачу
+// нельзя изменить, отменить или удалить. Сервер это тоже проверяет.
 
 export default function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -32,10 +35,9 @@ export default function useTasks() {
     setError(null);
 
     try {
-      const data = USE_MOCKS ? mockTasks : await getTasks();
-      setTasks(data);
+      setTasks(await getTasks());
     } catch (e) {
-      setError(getErrorMessage(e));
+      setError(getErrorMessage(e, "Не удалось загрузить задачи. Попробуйте позже"));
     } finally {
       setIsLoading(false);
     }
@@ -46,93 +48,79 @@ export default function useTasks() {
     void loadTasks();
   }, []);
 
-  //заменяем одну задачу в списке на новую версию
   function replaceTask(updated: Task) {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) => (task.id === updated.id ? updated : task)),
-    );
+    setTasks((current) => current.map((task) => (task.id === updated.id ? updated : task)));
   }
 
-  async function handleCreateTask(data: CreateTaskRequest) {
+  function isMarked(id: number): boolean {
+    return tasks.find((task) => task.id === id)?.status !== "active";
+  }
+
+  async function handleCreateTask(data: CreateTaskRequest): Promise<ActionResult<Task>> {
     try {
-      if (USE_MOCKS) {
-        const newTask: Task = {
-          id: Date.now(),
-
-          title: data.title,
-          description: data.description,
-          date: data.date,
-          difficulty: data.difficulty,
-          category: data.category,
-
-          status: "active",
-
-          createdAt: new Date().toISOString(),
-          completedAt: null,
-        };
-
-        setTasks((currentTasks) => [...currentTasks, newTask]);
-        return;
-      }
-
       const created = await createTask(data);
-      setTasks((currentTasks) => [...currentTasks, created]);
+      setTasks((current) => [...current, created]);
+      return success(created);
     } catch (e) {
-      setError(getErrorMessage(e));
+      return failure(getErrorMessage(e, "Не удалось создать задачу. Попробуйте позже"));
     }
   }
 
-  //галочка: активная задача становится выполненной (сгорает в костре),
-  //выполненная — возвращается в работу
-  async function handleToggleComplete(id: number) {
-    const task = tasks.find((item) => item.id === id);
-
-    if (!task) {
-      return;
+  async function handleUpdateTask(id: number, data: UpdateTaskRequest): Promise<ActionResult<Task>> {
+    if (isMarked(id)) {
+      return failure("Отмеченную задачу нельзя изменить");
     }
-
-    const isCompleted = task.status === "completed";
 
     try {
-      if (USE_MOCKS) {
-        replaceTask(
-          isCompleted
-            ? { ...task, status: "active", completedAt: null }
-            : {
-                ...task,
-                status: "completed",
-                completedAt: new Date().toISOString(),
-              },
-        );
-        return;
-      }
-
-      replaceTask(isCompleted ? await restoreTask(id) : await completeTask(id));
+      const updated = await updateTask(id, data);
+      replaceTask(updated);
+      return success(updated);
     } catch (e) {
-      setError(getErrorMessage(e));
+      return failure(getErrorMessage(e, "Не удалось сохранить. Попробуйте позже"));
     }
   }
 
-  async function handleDeleteTask(id: number) {
+  //«Выполнено»: задача отмечается, в костёр летят брёвна (ответ сервера содержит новый костёр)
+  async function handleCompleteTask(id: number): Promise<ActionResult<CompleteTaskResponse>> {
+    if (isMarked(id)) {
+      return failure("Задача уже завершена");
+    }
+
     try {
-      if (!USE_MOCKS) {
-        await deleteTask(id);
-      }
-
-      setTasks((currentTasks) =>
-        currentTasks.filter((task) => task.id !== id),
-      );
+      const result = await completeTask(id);
+      replaceTask(result.task);
+      return success(result);
     } catch (e) {
-      setError(getErrorMessage(e));
+      return failure(getErrorMessage(e, "Не удалось завершить задачу. Попробуйте ещё раз"));
     }
   }
 
-  //задачу бросили в костёр — сжигаем, только если она ещё активна
-  function handleBurnTask(id: number) {
-    const task = tasks.find((item) => item.id === id);
+  //«Не выполнил»: задача попадает в статистику как невыполненная, брёвен не даёт
+  async function handleFailTask(id: number): Promise<ActionResult<Task>> {
+    if (isMarked(id)) {
+      return failure("Задача уже отмечена, изменить её нельзя");
+    }
 
-    if (task && task.status === "active") {
-      void handleToggleComplete(id);
+    try {
+      const updated = await failTask(id);
+      replaceTask(updated);
+      return success(updated);
+    } catch (e) {
+      return failure(getErrorMessage(e, "Не удалось обновить задачу. Попробуйте позже"));
+    }
+  }
+
+  async function handleDeleteTask(id: number): Promise<ActionResult> {
+    if (isMarked(id)) {
+      return failure("Отмеченную задачу удалить нельзя");
+    }
+
+    try {
+      await deleteTask(id);
+      setTasks((current) => current.filter((task) => task.id !== id));
+      return success(undefined);
+    } catch (e) {
+      return failure(getErrorMessage(e, "Не удалось удалить задачу. Попробуйте позже"));
     }
   }
 
@@ -141,20 +129,10 @@ export default function useTasks() {
     isLoading,
     error,
     reloadTasks: loadTasks,
-    clearError: () => setError(null),
     handleCreateTask,
-    handleToggleComplete,
+    handleUpdateTask,
+    handleCompleteTask,
+    handleFailTask,
     handleDeleteTask,
-    handleBurnTask,
   };
-}
-
-//apiRequest бросает обычный Error с текстом от сервера.
-//Если сервер вообще недоступен, fetch бросает TypeError («Failed to fetch»).
-function getErrorMessage(error: unknown): string {
-  if (error instanceof TypeError) {
-    return "Не удалось связаться с сервером";
-  }
-
-  return error instanceof Error ? error.message : "Что-то пошло не так";
 }
