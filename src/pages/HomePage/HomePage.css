@@ -9,22 +9,75 @@
 
   gap: 20px;
 
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .home-date h1 {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
 
   font-size: 30px;
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
 
-.home-date p {
-  margin: 0;
+/* ‹ Среда, 14 октября › Сегодня */
+.home-day-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
-  font-size: 13px;
-  color: var(--color-muted);
+.home-day-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 0;
+  min-width: 190px;
+
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.home-day-badge {
+  padding: 2px 8px;
+
+  border-radius: 999px;
+  background-color: var(--color-accent-soft);
+
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.home-day-arrow {
+  width: 30px;
+  height: 30px;
+
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9px;
+  background-color: var(--color-surface);
+
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.home-day-arrow:hover {
+  background-color: white;
+}
+
+.home-day-today {
+  padding: 6px 12px;
+
+  border: none;
+  border-radius: 9px;
+  background-color: var(--color-sage);
+
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .home-add-button {
@@ -48,6 +101,12 @@
   background-color: var(--color-accent-hover);
 }
 
+.home-add-button:disabled {
+  background-color: #d8cfc0;
+  box-shadow: none;
+  cursor: default;
+}
+
 .home-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -55,6 +114,15 @@
   gap: 20px;
 
   align-items: start;
+}
+
+/* справа — костёр, под ним календарь */
+.home-side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  min-width: 0;
 }
 
 .tasks-section {
@@ -95,5 +163,9 @@
 
   .home-date h1 {
     font-size: 24px;
+  }
+
+  .home-day-title {
+    min-width: 0;
   }
 }
