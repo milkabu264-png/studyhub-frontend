@@ -1,0 +1,174 @@
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 18px 20px;
+
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.calendar-header h2 {
+  margin: 0;
+
+  font-size: 16px;
+}
+
+.calendar-arrow {
+  width: 30px;
+  height: 30px;
+
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.calendar-arrow:hover {
+  background-color: var(--color-surface-muted);
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.calendar-weekday {
+  padding-bottom: 4px;
+
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.calendar-day {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  height: 38px;
+  padding: 0;
+
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.calendar-day:hover {
+  background-color: var(--color-surface-muted);
+}
+
+.calendar-day-past {
+  color: var(--color-muted);
+}
+
+.calendar-day-today {
+  box-shadow: inset 0 0 0 1.5px var(--color-accent);
+  color: var(--color-text);
+}
+
+.calendar-day-selected,
+.calendar-day-selected:hover {
+  background-color: var(--color-olive);
+  color: white;
+}
+
+.calendar-dots {
+  position: absolute;
+  bottom: 4px;
+
+  display: flex;
+  gap: 2px;
+}
+
+.calendar-dots i,
+.calendar-legend i {
+  display: inline-block;
+
+  width: 5px;
+  height: 5px;
+
+  border-radius: 50%;
+}
+
+.calendar-dot-active {
+  background-color: #e0954a;
+}
+
+.calendar-dot-done {
+  background-color: var(--color-chart);
+}
+
+.calendar-dot-overdue {
+  background-color: var(--color-danger);
+}
+
+/* на выбранном дне точки светлее, чтобы не терялись на зелёном */
+.calendar-day-selected .calendar-dots i {
+  box-shadow: 0 0 0 1.5px white;
+}
+
+.calendar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.calendar-legend i {
+  margin-left: 4px;
+}
+
+.calendar-legend i:first-child {
+  margin-left: 0;
+}
+
+.calendar-today {
+  padding: 6px 12px;
+
+  border: 1px solid var(--color-border-strong);
+  border-radius: 9px;
+  background-color: white;
+
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.calendar-today:disabled {
+  color: var(--color-muted);
+  cursor: default;
+}
