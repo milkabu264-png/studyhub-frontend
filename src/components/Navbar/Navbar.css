@@ -103,13 +103,38 @@
   }
 }
 
-/* имя пользователя справа в шапке */
+/* справа: таймер фокуса и имя пользователя */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-left: auto;
+}
+
+.navbar-focus {
+  padding: 5px 12px;
+
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.16);
+
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.navbar-focus:hover {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+
 .navbar-user {
   display: flex;
   align-items: center;
   gap: 8px;
 
-  margin-left: auto;
   padding: 4px 12px 4px 4px;
 
   border-radius: 999px;
@@ -141,9 +166,16 @@
 
 /* на телефоне — в правом верхнем углу, рядом с логотипом */
 @media (max-width: 900px) {
-  .navbar-user {
+  .navbar-right {
     position: absolute;
     top: 12px;
     right: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .navbar-user {
+    padding-right: 4px;
+    font-size: 0;
   }
 }

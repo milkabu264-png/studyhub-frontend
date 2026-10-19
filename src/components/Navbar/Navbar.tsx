@@ -1,5 +1,7 @@
-import {NavLink} from 'react-router-dom';
-import useSettings from "../../features/settings/useSettings";
+import {Link, NavLink} from 'react-router-dom';
+import useAuth from "../../features/auth/useAuth";
+import useFocus from "../../features/focus/useFocus";
+import { formatClock } from "../../features/focus/focusUtils";
 import "./Navbar.css";
 
 //маленькие линейные иконки для пунктов меню
@@ -30,9 +32,13 @@ function Icon({ path }: { path: string }) {
 }
 
 export default function Navbar() {
-  //имя берём из настроек — после сохранения в «Аккаунте» оно сразу обновится здесь
-  const { settings } = useSettings();
-  const name = settings.profile.name;
+  //имя берём из аккаунта — после сохранения в настройках оно сразу обновится здесь
+  const { user } = useAuth();
+  const name = user?.name ?? "";
+
+  //идёт фокус — показываем оставшееся время на любой странице
+  const focus = useFocus();
+  const isFocusActive = focus.phase === "running" || focus.phase === "paused";
 
     return (
     <header className="navbar">
@@ -66,14 +72,22 @@ export default function Navbar() {
         </NavLink>
       </nav>
 
-      {name && (
-        <NavLink to="/settings" className="navbar-user" title="Настройки профиля">
-          <span className="navbar-user-avatar" aria-hidden="true">
-            {name.charAt(0).toUpperCase()}
-          </span>
-          {name}
-        </NavLink>
-      )}
+      <div className="navbar-right">
+        {isFocusActive && (
+          <Link to="/" state={{ openFocus: true }} className="navbar-focus" title="Открыть фокус-таймер">
+            {focus.phase === "paused" ? "Пауза" : "Фокус"} · {formatClock(focus.remainingMs)}
+          </Link>
+        )}
+
+        {name && (
+          <NavLink to="/settings" className="navbar-user" title="Настройки профиля">
+            <span className="navbar-user-avatar" aria-hidden="true">
+              {name.charAt(0).toUpperCase()}
+            </span>
+            {name}
+          </NavLink>
+        )}
+      </div>
     </header>
   );
 }
