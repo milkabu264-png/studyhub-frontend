@@ -6,7 +6,8 @@ import StatCard from "../../features/statistics/StatCard";
 import StreakBanner from "../../features/statistics/StreakBanner";
 import useStatistics from "../../features/statistics/useStatistics";
 import { PERIOD_LABELS } from "../../features/statistics/statisticsUtils";
-import { DIFFICULTY_LABELS, plural } from "../../features/tasks/taskUtils";
+import { DIFFICULTY_LABELS } from "../../features/tasks/taskUtils";
+import { formatDuration } from "../../features/focus/focusUtils";
 
 import type { StatisticsPeriod } from "../../types/statistics";
 
@@ -15,28 +16,39 @@ import "./StatisticsPage.css";
 // Страница «Статистика» (View).
 // Все числа считает контроллер useStatistics, страница их только показывает.
 
-const PERIODS: StatisticsPeriod[] = ["day", "week", "month", "all"];
+const PERIODS: StatisticsPeriod[] = ["day", "week", "month", "range", "all"];
 
 function StatisticsPage() {
   const {
     statistics,
     period,
     setPeriod,
+    range,
+    setRange,
+    rangeError,
     isLoading,
     error,
     reloadStatistics,
   } = useStatistics();
 
-  //за выбранный период нет ни одной задачи
+  //за выбранный период нет ни выполненных задач, ни фокуса
   const isEmpty =
-    statistics.completed + statistics.failed + statistics.active === 0;
+    statistics.completed + statistics.failed === 0 && statistics.focusSeconds === 0;
+
+  function getActivityHint(): string {
+    const what = statistics.activityUnit === "week" ? "по неделям" : "по дням";
+
+    if (period === "all") return `Выполнено задач ${what}, последние 12 недель`;
+    if (period === "range") return `Выполнено задач ${what} за выбранные даты`;
+    return `Выполнено задач ${what}, последние ${statistics.activity.length} дней`;
+  }
 
   return (
     <div className="statistics-page">
       <div className="statistics-header">
         <div>
           <h1>Статистика</h1>
-          <p>Сколько уже сгорело в костре — без гонки, просто чтобы видеть свой ритм.</p>
+          <p>Считается из задач и фокус-сессий — без гонки, просто чтобы видеть свой ритм.</p>
         </div>
 
         {/* выбор периода — те же варианты, что были в выпадающем списке */}
@@ -54,6 +66,31 @@ function StatisticsPage() {
           ))}
         </div>
       </div>
+
+      {/* произвольный диапазон дат */}
+      {period === "range" && (
+        <div className="statistics-range">
+          <label>
+            с
+            <input
+              type="date"
+              value={range.from}
+              onChange={(event) => setRange({ ...range, from: event.target.value })}
+            />
+          </label>
+
+          <label>
+            по
+            <input
+              type="date"
+              value={range.to}
+              onChange={(event) => setRange({ ...range, to: event.target.value })}
+            />
+          </label>
+
+          {rangeError && <span className="statistics-range-error">{rangeError}</span>}
+        </div>
+      )}
 
       {error && (
         <div className="statistics-error" role="alert">
@@ -77,34 +114,31 @@ function StatisticsPage() {
             <StatCard
               label="Очки"
               value={statistics.points}
-              hint="1 за лёгкую, 2 за среднюю, 3 за сложную"
+              hint={`за всё время — ${statistics.totalPoints}`}
             />
 
             <StatCard
               label="Выполнено задач"
               value={statistics.completed}
-              hint={`${statistics.completed} ${plural(statistics.completed, ["бревно", "бревна", "брёвен"])} в костёр`}
+              hint={`ещё активных: ${statistics.active}`}
             />
 
             <StatCard
               label="Не выполнено задач"
               value={statistics.failed}
-              hint={`ещё в работе: ${statistics.active}`}
+              hint={`доля выполненных — ${statistics.completionRate}%`}
             />
 
             <StatCard
-              label="Доля выполненных"
-              value={`${statistics.completionRate}%`}
-              hint="из задач, срок которых прошёл"
+              label="Время фокуса"
+              value={statistics.focusSeconds === 0 ? "0 мин" : formatDuration(statistics.focusSeconds)}
+              hint="без учёта пауз"
             />
           </section>
 
-          {isEmpty && (
+          {isEmpty && !error && (
             <div className="statistics-empty">
-              <p>
-                За этот период задач пока нет. Добавьте задачу на главной —
-                и здесь появятся первые цифры.
-              </p>
+              <p>Пока нет данных. Выполните первую задачу.</p>
 
               <Link to="/">Перейти к задачам</Link>
             </div>
@@ -118,11 +152,7 @@ function StatisticsPage() {
           <div className="statistics-panels">
             <section className="statistics-panel statistics-panel-wide">
               <h2>Активность</h2>
-              <p className="statistics-panel-hint">
-                {statistics.activityUnit === "week"
-                  ? "Выполнено задач по неделям, последние 12 недель"
-                  : `Выполнено задач по дням, последние ${statistics.activity.length} дней`}
-              </p>
+              <p className="statistics-panel-hint">{getActivityHint()}</p>
 
               <ActivityChart
                 activity={statistics.activity}

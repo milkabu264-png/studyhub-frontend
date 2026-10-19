@@ -9,7 +9,7 @@ interface StreakBannerProps {
   bestDay: DayActivity | null;
 }
 
-//полоса над графиками: сколько дней подряд горит огонёк и какой день был самым продуктивным
+//полоса над графиками: сколько дней подряд выполнялись задачи и какой день был самым продуктивным
 
 export default function StreakBanner({ streakDays, bestDay }: StreakBannerProps) {
   return (
@@ -24,14 +24,14 @@ export default function StreakBanner({ streakDays, bestDay }: StreakBannerProps)
         {streakDays > 0 ? (
           <>
             <strong>
-              {streakDays} {plural(streakDays, ["день", "дня", "дней"])} подряд огонёк не гаснет
+              {streakDays} {plural(streakDays, ["день", "дня", "дней"])} подряд с выполненными задачами
             </strong>
             <span>Каждый день хотя бы одна задача отправилась в костёр.</span>
           </>
         ) : (
           <>
-            <strong>Огонёк ждёт первую задачу</strong>
-            <span>Выполните одну задачу сегодня — и серия начнётся.</span>
+            <strong>Серия ещё не началась</strong>
+            <span>Выполните одну задачу сегодня — и она начнётся.</span>
           </>
         )}
       </div>

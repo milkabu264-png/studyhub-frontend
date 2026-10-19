@@ -1,28 +1,34 @@
 import type { Task } from "../../types/task";
-import { POINTS_BY_DIFFICULTY } from "../../types/statistics";
+import { POINTS_BY_DIFFICULTY } from "../../types/task";
+import type { FocusSession } from "../../types/focus";
 import type {
+  DateRange,
   DayActivity,
   Statistics,
   StatisticsPeriod,
 } from "../../types/statistics";
 
-// Подсчёт статистики по списку задач — чистые функции без React.
-// Сейчас статистика считается на frontend из тех же задач, что приходят с GET /tasks.
+// Подсчёт статистики — чистые функции без React (п. 1.5).
+// Статистика не вводится вручную: она считается из задач (GET /tasks) и фокус-сессий (GET /focus/sessions).
 
 export const PERIOD_LABELS: Record<StatisticsPeriod, string> = {
   day: "День",
   week: "Неделя",
   month: "Месяц",
+  range: "Даты",
   all: "Всё время",
 };
 
-//сколько дней входит в период (для «Всё время» — без ограничения)
-const PERIOD_DAYS: Record<StatisticsPeriod, number | null> = {
+//сколько дней входит в период (для «Всё время» — без ограничения; для «Даты» — свои границы)
+const PERIOD_DAYS: Record<Exclude<StatisticsPeriod, "range">, number | null> = {
   day: 1,
   week: 7,
   month: 30,
   all: null,
 };
+
+//в произвольном диапазоне до стольких дней график по дням, дальше — по неделям
+const RANGE_DAILY_LIMIT = 31;
 
 //сколько недель показываем на графике для «Всё время»
 const ALL_TIME_WEEKS = 12;
@@ -48,15 +54,25 @@ export function toDayKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-//с какого дня начинается период; null — «Всё время»
-function getPeriodStart(period: StatisticsPeriod, now: Date): Date | null {
-  const days = PERIOD_DAYS[period];
+interface PeriodBounds {
+  //null — без начала («Всё время»)
+  start: Date | null;
+  end: Date;
+}
 
-  if (days === null) {
-    return null;
+//границы периода (включительно)
+function getPeriodBounds(period: StatisticsPeriod, now: Date, range?: DateRange): PeriodBounds {
+  if (period === "range" && range) {
+    return {
+      start: new Date(`${range.from}T00:00:00`),
+      end: new Date(`${range.to}T00:00:00`),
+    };
   }
 
-  return addDays(startOfDay(now), -(days - 1));
+  const days = period === "range" ? 7 : PERIOD_DAYS[period];
+  const end = startOfDay(now);
+
+  return { start: days === null ? null : addDays(end, -(days - 1)), end };
 }
 
 //день, к которому относится задача: выполненная — по дню выполнения, остальные — по дедлайну
@@ -68,9 +84,8 @@ function getTaskDay(task: Task): Date {
   return new Date(`${task.date}T00:00:00`);
 }
 
-function isInPeriod(day: Date, start: Date | null, now: Date): boolean {
-  const end = startOfDay(now);
-  return (start === null || day >= start) && day <= end;
+function isInPeriod(day: Date, bounds: PeriodBounds): boolean {
+  return (bounds.start === null || day >= bounds.start) && day <= bounds.end;
 }
 
 //сколько задач выполнено в каждый день: { "2026-10-14": 3, ... }
@@ -87,37 +102,67 @@ function countCompletedByDay(tasks: Task[]): Map<string, number> {
   return counts;
 }
 
-//столбики графика: по дням (неделя / месяц) или по неделям (всё время)
+//сумма выполненных задач за 7 дней, начиная с weekStart
+function sumWeek(byDay: Map<string, number>, weekStart: Date): number {
+  let completed = 0;
+
+  for (let d = 0; d < 7; d += 1) {
+    completed += byDay.get(toDayKey(addDays(weekStart, d))) ?? 0;
+  }
+
+  return completed;
+}
+
+//столбики графика: по дням (неделя, месяц, короткий диапазон) или по неделям (всё время, длинный диапазон)
 function buildActivity(
   byDay: Map<string, number>,
   period: StatisticsPeriod,
-  now: Date,
-): DayActivity[] {
-  const today = startOfDay(now);
+  bounds: PeriodBounds,
+): { activity: DayActivity[]; unit: "day" | "week" } {
+  const end = bounds.end;
+
+  if (period === "range" && bounds.start) {
+    const days = Math.round((end.getTime() - bounds.start.getTime()) / 86_400_000) + 1;
+
+    if (days <= RANGE_DAILY_LIMIT) {
+      const activity = Array.from({ length: days }, (_, i) => {
+        const day = addDays(bounds.start as Date, i);
+        return { date: toDayKey(day), completed: byDay.get(toDayKey(day)) ?? 0 };
+      });
+
+      return { activity, unit: "day" };
+    }
+
+    const weeks = Math.ceil(days / 7);
+    const activity = Array.from({ length: weeks }, (_, i) => {
+      const weekStart = addDays(bounds.start as Date, i * 7);
+      return { date: toDayKey(weekStart), completed: sumWeek(byDay, weekStart) };
+    });
+
+    return { activity, unit: "week" };
+  }
 
   if (period === "all") {
-    return Array.from({ length: ALL_TIME_WEEKS }, (_, i) => {
-      const weekStart = addDays(today, -7 * (ALL_TIME_WEEKS - i) + 1);
-      let completed = 0;
-
-      for (let d = 0; d < 7; d += 1) {
-        completed += byDay.get(toDayKey(addDays(weekStart, d))) ?? 0;
-      }
-
-      return { date: toDayKey(weekStart), completed };
+    const activity = Array.from({ length: ALL_TIME_WEEKS }, (_, i) => {
+      const weekStart = addDays(end, -7 * (ALL_TIME_WEEKS - i) + 1);
+      return { date: toDayKey(weekStart), completed: sumWeek(byDay, weekStart) };
     });
+
+    return { activity, unit: "week" };
   }
 
   //для периода «День» всё равно показываем неделю — один столбик ничего не говорит
   const days = period === "month" ? 30 : 7;
 
-  return Array.from({ length: days }, (_, i) => {
-    const day = addDays(today, -(days - 1 - i));
+  const activity = Array.from({ length: days }, (_, i) => {
+    const day = addDays(end, -(days - 1 - i));
     return { date: toDayKey(day), completed: byDay.get(toDayKey(day)) ?? 0 };
   });
+
+  return { activity, unit: "day" };
 }
 
-//сколько дней подряд (до сегодня) выполнялась хотя бы одна задача — «огонёк не гаснет»
+//сколько дней подряд (до сегодня) выполнялась хотя бы одна задача
 function countStreak(byDay: Map<string, number>, now: Date): number {
   let day = startOfDay(now);
 
@@ -138,12 +183,14 @@ function countStreak(byDay: Map<string, number>, now: Date): number {
 
 export function calculateStatistics(
   tasks: Task[],
+  focusSessions: FocusSession[],
   period: StatisticsPeriod,
+  range?: DateRange,
   now = new Date(),
 ): Statistics {
-  const start = getPeriodStart(period, now);
+  const bounds = getPeriodBounds(period, now, range);
 
-  const inPeriod = tasks.filter((task) => isInPeriod(getTaskDay(task), start, now));
+  const inPeriod = tasks.filter((task) => isInPeriod(getTaskDay(task), bounds));
 
   const completedTasks = inPeriod.filter((task) => task.status === "completed");
   const failed = inPeriod.filter((task) => task.status === "failed").length;
@@ -164,6 +211,20 @@ export function calculateStatistics(
     categories.set(category, (categories.get(category) ?? 0) + 1);
   }
 
+  //очки за всё время — сумма за все выполненные задачи; очки только растут
+  const totalPoints = tasks
+    .filter((task) => task.status === "completed")
+    .reduce((sum, task) => sum + POINTS_BY_DIFFICULTY[task.difficulty], 0);
+
+  //время фокуса без пауз по завершённым и прерванным сессиям
+  const focusSeconds = focusSessions
+    .filter(
+      (session) =>
+        session.status !== "active" &&
+        isInPeriod(startOfDay(new Date(session.startedAt)), bounds),
+    )
+    .reduce((sum, session) => sum + session.focusedSeconds, 0);
+
   const byCategory = [...categories.entries()]
     .map(([category, count]) => ({ category, completed: count }))
     .sort((a, b) => b.completed - a.completed);
@@ -176,22 +237,26 @@ export function calculateStatistics(
   for (const [date, count] of byDay) {
     const day = new Date(`${date}T00:00:00`);
 
-    if (isInPeriod(day, start, now) && (!bestDay || count > bestDay.completed)) {
+    if (isInPeriod(day, bounds) && (!bestDay || count > bestDay.completed)) {
       bestDay = { date, completed: count };
     }
   }
 
+  const { activity, unit } = buildActivity(byDay, period, bounds);
+
   return {
     period,
     points,
+    totalPoints,
+    focusSeconds,
     completed,
     failed,
     active,
     completionRate: finished === 0 ? 0 : Math.round((completed / finished) * 100),
     byDifficulty,
     byCategory,
-    activity: buildActivity(byDay, period, now),
-    activityUnit: period === "all" ? "week" : "day",
+    activity,
+    activityUnit: unit,
     streakDays: countStreak(byDay, now),
     bestDay,
   };
