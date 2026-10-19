@@ -1,49 +1,43 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+
+import ConfirmDialog from "../../components/ConfirmDialog/ConfirmDialog";
 
 import "./settings.css";
 import "./AccountActions.css";
 
 interface AccountActionsProps {
-  onLogout: () => Promise<boolean>;
-  onDelete: () => Promise<boolean>;
+  onLogout: () => Promise<void>;
+  //возвращает текст ошибки (например, «Неверный пароль») или null, если аккаунт удалён
+  onDelete: (password: string) => Promise<string | null>;
 }
 
-//слово, которое нужно ввести, чтобы удалить аккаунт, — защита от случайного клика
-const CONFIRM_WORD = "удалить";
-
-//раздел с выходом и удалением аккаунта
+//раздел с выходом и удалением аккаунта (п. 1.1.3, 1.1.5)
 
 export default function AccountActions({ onLogout, onDelete }: AccountActionsProps) {
-  const navigate = useNavigate();
-
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
 
   async function handleLogout() {
     setIsBusy(true);
-    const ok = await onLogout();
-    setIsBusy(false);
-
-    if (ok) {
-      navigate("/login");
-    }
+    await onLogout();
   }
 
   async function handleDelete() {
     setIsBusy(true);
-    const ok = await onDelete();
+    const error = await onDelete(password);
     setIsBusy(false);
 
-    if (ok) {
-      navigate("/register");
+    if (error) {
+      setDeleteError(error);
     }
   }
 
-  function cancelDelete() {
-    setIsConfirming(false);
-    setConfirmText("");
+  function closeDelete() {
+    setIsDeleteOpen(false);
+    setPassword("");
+    setDeleteError(null);
   }
 
   return (
@@ -60,56 +54,49 @@ export default function AccountActions({ onLogout, onDelete }: AccountActionsPro
           Выйти
         </button>
 
-        {!isConfirming && (
-          <button
-            type="button"
-            className="account-delete-button"
-            onClick={() => setIsConfirming(true)}
-          >
-            Удалить аккаунт
-          </button>
-        )}
+        <button
+          type="button"
+          className="account-delete-button"
+          onClick={() => setIsDeleteOpen(true)}
+        >
+          Удалить аккаунт
+        </button>
       </div>
 
-      {/* подтверждение удаления — прямо на странице, без всплывающих окон */}
-      {isConfirming && (
-        <div className="account-confirm" role="alertdialog" aria-labelledby="delete-title">
-          <strong id="delete-title">Удалить аккаунт насовсем?</strong>
+      {/* удаление подтверждается паролем в диалоге */}
+      {isDeleteOpen && (
+        <ConfirmDialog
+          title="Удалить аккаунт насовсем?"
+          text="Задачи, сессии фокуса, записи и статистика удалятся без возможности восстановления."
+          confirmText={isBusy ? "Удаляем…" : "Удалить навсегда"}
+          danger
+          confirmDisabled={!password || isBusy}
+          onConfirm={() => void handleDelete()}
+          onCancel={closeDelete}
+        >
+          <label className="settings-field">
+            Пароль
 
-          <p>
-            Задачи, заметки и статистика удалятся без возможности восстановления.
-            Чтобы подтвердить, введите слово «{CONFIRM_WORD}».
-          </p>
+            <input
+              id="deletePassword"
+              type="password"
+              autoComplete="current-password"
+              autoFocus
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setDeleteError(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && password && !isBusy) {
+                  void handleDelete();
+                }
+              }}
+            />
+          </label>
 
-          <input
-            id="deleteConfirm"
-            type="text"
-            autoFocus
-            autoComplete="off"
-            value={confirmText}
-            onChange={(event) => setConfirmText(event.target.value)}
-            aria-label={`Введите «${CONFIRM_WORD}»`}
-          />
-
-          <div className="settings-actions">
-            <button
-              type="button"
-              className="account-delete-confirm"
-              disabled={confirmText.trim().toLowerCase() !== CONFIRM_WORD || isBusy}
-              onClick={() => void handleDelete()}
-            >
-              Удалить навсегда
-            </button>
-
-            <button
-              type="button"
-              className="settings-button settings-button-secondary"
-              onClick={cancelDelete}
-            >
-              Отмена
-            </button>
-          </div>
-        </div>
+          {deleteError && <p className="confirm-error" role="alert">{deleteError}</p>}
+        </ConfirmDialog>
       )}
     </section>
   );

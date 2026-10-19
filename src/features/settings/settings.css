@@ -105,3 +105,33 @@
   font-weight: 600;
   color: var(--color-olive);
 }
+
+/* два поля в строку (e-mail и телефон, новый пароль и повтор) */
+.settings-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.settings-field-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.settings-server-error {
+  margin: 0;
+  padding: 10px 12px;
+
+  border-radius: 10px;
+  background-color: #fbecea;
+
+  font-size: 13px;
+  color: #8a3a33;
+}
+
+@media (max-width: 600px) {
+  .settings-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

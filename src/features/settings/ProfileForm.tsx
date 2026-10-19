@@ -1,49 +1,88 @@
 import { useState, type FormEvent } from "react";
 
-import type { UserProfile } from "../../types/settings";
+import type { UpdateAccountRequest, User } from "../../types/auth";
+import { NAME_MAX_LENGTH } from "../../types/auth";
 import {
-  NAME_MAX_LENGTH,
-  hasErrors,
-  validateProfile,
-} from "./settingsUtils";
-import type { ProfileErrors } from "./settingsUtils";
+  collectErrors,
+  normalizePhone,
+  validateEmail,
+  validateName,
+  validatePhone,
+} from "../auth/authValidation";
 
 import "./settings.css";
 
 interface ProfileFormProps {
-  profile: UserProfile;
-  onSave: (profile: UserProfile) => Promise<boolean>;
+  user: User;
+  //возвращает текст ошибки сервера или null, если всё сохранилось
+  onSave: (data: UpdateAccountRequest) => Promise<string | null>;
 }
 
-//раздел «Аккаунт»: имя и e-mail
+type Field = "name" | "email" | "phone" | "currentPassword";
 
-export default function ProfileForm({ profile, onSave }: ProfileFormProps) {
-  const [name, setName] = useState(profile.name);
-  const [email, setEmail] = useState(profile.email);
+//раздел «Аккаунт» (п. 1.1.4): имя, e-mail и телефон.
+//Для смены e-mail или телефона нужен текущий пароль.
 
-  const [errors, setErrors] = useState<ProfileErrors>({});
+export default function ProfileForm({ user, onSave }: ProfileFormProps) {
+  const [name, setName] = useState(user.name);
+  const [email, setEmail] = useState(user.email);
+  const [phone, setPhone] = useState(user.phone);
+  const [currentPassword, setCurrentPassword] = useState("");
+
+  const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
+  const [serverError, setServerError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
+  const contactChanged = email.trim() !== user.email || normalizePhone(phone) !== user.phone;
+
   //кнопка активна, только если что-то поменяли
-  const isChanged = name !== profile.name || email !== profile.email;
+  const isChanged = name.trim() !== user.name || contactChanged;
+
+  function clearField(field: Field) {
+    setErrors({ ...errors, [field]: undefined });
+    setServerError(null);
+    setIsSaved(false);
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const data = { name: name.trim(), email: email.trim() };
-    const newErrors = validateProfile(data);
+    const newErrors = collectErrors<Field>({
+      name: validateName(name),
+      email: validateEmail(email),
+      phone: validatePhone(phone),
+      currentPassword: contactChanged && !currentPassword ? "Введите текущий пароль" : null,
+    });
 
     setErrors(newErrors);
 
-    if (hasErrors(newErrors)) {
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
 
     setIsSaving(true);
-    const ok = await onSave(data);
+
+    const error = await onSave({
+      name: name.trim(),
+      email: email.trim(),
+      phone: normalizePhone(phone),
+      currentPassword: contactChanged ? currentPassword : null,
+    });
+
     setIsSaving(false);
-    setIsSaved(ok);
+
+    if (error) {
+      setServerError(error);
+      return;
+    }
+
+    //показываем значения так, как их сохранил сервер (телефон — в формате +7XXXXXXXXXX)
+    setName(name.trim());
+    setEmail(email.trim());
+    setPhone(normalizePhone(phone));
+    setCurrentPassword("");
+    setIsSaved(true);
   }
 
   return (
@@ -56,36 +95,84 @@ export default function ProfileForm({ profile, onSave }: ProfileFormProps) {
         <input
           id="userName"
           type="text"
+          autoComplete="name"
           maxLength={NAME_MAX_LENGTH}
           value={name}
           className={errors.name ? "settings-input-error" : ""}
           onChange={(event) => {
             setName(event.target.value);
-            setIsSaved(false);
-            setErrors({ ...errors, name: undefined });
+            clearField("name");
           }}
         />
 
         {errors.name && <span className="settings-error-text">{errors.name}</span>}
       </label>
 
-      <label className="settings-field">
-        E-mail
+      <div className="settings-row">
+        <label className="settings-field">
+          E-mail
 
-        <input
-          id="email"
-          type="email"
-          value={email}
-          className={errors.email ? "settings-input-error" : ""}
-          onChange={(event) => {
-            setEmail(event.target.value);
-            setIsSaved(false);
-            setErrors({ ...errors, email: undefined });
-          }}
-        />
+          <input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            className={errors.email ? "settings-input-error" : ""}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              clearField("email");
+            }}
+          />
 
-        {errors.email && <span className="settings-error-text">{errors.email}</span>}
-      </label>
+          {errors.email && <span className="settings-error-text">{errors.email}</span>}
+        </label>
+
+        <label className="settings-field">
+          Телефон
+
+          <input
+            id="phone"
+            type="tel"
+            autoComplete="tel"
+            placeholder="+7XXXXXXXXXX"
+            value={phone}
+            className={errors.phone ? "settings-input-error" : ""}
+            onChange={(event) => {
+              setPhone(event.target.value);
+              clearField("phone");
+            }}
+          />
+
+          {errors.phone && <span className="settings-error-text">{errors.phone}</span>}
+        </label>
+      </div>
+
+      {/* текущий пароль — только когда меняется e-mail или телефон */}
+      {contactChanged && (
+        <label className="settings-field">
+          Текущий пароль
+
+          <input
+            id="profilePassword"
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            className={errors.currentPassword ? "settings-input-error" : ""}
+            onChange={(event) => {
+              setCurrentPassword(event.target.value);
+              clearField("currentPassword");
+            }}
+          />
+
+          {errors.currentPassword ? (
+            <span className="settings-error-text">{errors.currentPassword}</span>
+          ) : (
+            <span className="settings-field-hint">Нужен, чтобы сменить e-mail или телефон</span>
+          )}
+        </label>
+      )}
+
+      {serverError && <p className="settings-server-error" role="alert">{serverError}</p>}
 
       <div className="settings-actions">
         <button
@@ -96,7 +183,7 @@ export default function ProfileForm({ profile, onSave }: ProfileFormProps) {
           {isSaving ? "Сохраняем…" : "Сохранить"}
         </button>
 
-        {isSaved && !isChanged && <span className="settings-saved">Сохранено</span>}
+        {isSaved && !isChanged && <span className="settings-saved">Изменения сохранены</span>}
       </div>
     </form>
   );

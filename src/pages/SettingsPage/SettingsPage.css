@@ -28,48 +28,6 @@
   gap: 20px;
 }
 
-.settings-skeleton {
-  height: 260px;
-
-  border-radius: 18px;
-  background: linear-gradient(90deg, #f6f1e6 0%, #fbf7ee 50%, #f6f1e6 100%);
-  background-size: 200% 100%;
-
-  animation: settings-skeleton 1.2s ease-in-out infinite;
-}
-
-@keyframes settings-skeleton {
-  from { background-position: 100% 0; }
-  to { background-position: -100% 0; }
-}
-
-.settings-page-error {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  margin-bottom: 16px;
-  padding: 10px 14px;
-
-  border-radius: 10px;
-  background-color: var(--color-accent-soft);
-
-  font-size: 13px;
-  color: #8a3f26;
-}
-
-.settings-page-error span {
-  flex: 1;
-}
-
-.settings-page-error button {
-  border: none;
-  background: none;
-
-  color: var(--color-accent);
-  cursor: pointer;
-}
-
 @media (max-width: 600px) {
   .settings-header h1 {
     font-size: 24px;

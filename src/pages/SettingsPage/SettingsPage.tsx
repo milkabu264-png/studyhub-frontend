@@ -1,60 +1,72 @@
+import { useNavigate } from "react-router-dom";
+
 import AccountActions from "../../features/settings/AccountActions";
-import CampfireSettingsForm from "../../features/settings/CampfireSettingsForm";
+import PasswordForm from "../../features/settings/PasswordForm";
 import ProfileForm from "../../features/settings/ProfileForm";
-import useSettings from "../../features/settings/useSettings";
+import useAuth from "../../features/auth/useAuth";
+import { getErrorMessage } from "../../services/api";
 
 import "./SettingsPage.css";
 
 // Страница «Настройки» (View).
-// Данные и действия берёт из контроллера настроек (useSettings).
+// Данные и действия берёт из контроллера аккаунта (useAuth).
 
 function SettingsPage() {
-  const {
-    settings,
-    isLoading,
-    error,
-    clearError,
-    saveProfile,
-    saveCampfire,
-    logout,
-    deleteAccount,
-  } = useSettings();
+  const { user, updateAccount, changePassword, logout, deleteAccount } = useAuth();
+  const navigate = useNavigate();
+
+  //сюда попадают только после входа — RequireAuth не пустит без пользователя
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="settings-page">
       <div className="settings-header">
         <h1>Настройки</h1>
-        <p>Профиль, правила костра и аккаунт.</p>
+        <p>Данные аккаунта, пароль и выход.</p>
       </div>
 
-      {error && (
-        <div className="settings-page-error" role="alert">
-          <span>{error}</span>
+      <div className="settings-content">
+        <ProfileForm
+          user={user}
+          onSave={async (data) => {
+            try {
+              await updateAccount(data);
+              return null;
+            } catch (e) {
+              return getErrorMessage(e, "Не удалось сохранить. Попробуйте позже");
+            }
+          }}
+        />
 
-          <button type="button" aria-label="Скрыть ошибку" onClick={clearError}>
-            ✕
-          </button>
-        </div>
-      )}
+        <PasswordForm
+          onSave={async (data) => {
+            try {
+              await changePassword(data);
+              return null;
+            } catch (e) {
+              return getErrorMessage(e, "Не удалось сохранить. Попробуйте позже");
+            }
+          }}
+        />
 
-      {isLoading ? (
-        <div className="settings-skeleton" />
-      ) : (
-        <div className="settings-content">
-          {/* формы появляются, когда настройки уже загружены, — поля сразу заполнены */}
-          <ProfileForm
-            profile={settings.profile}
-            onSave={saveProfile}
-          />
-
-          <CampfireSettingsForm
-            thresholds={settings.campfire}
-            onSave={saveCampfire}
-          />
-
-          <AccountActions onLogout={logout} onDelete={deleteAccount} />
-        </div>
-      )}
+        <AccountActions
+          onLogout={async () => {
+            await logout();
+            navigate("/login", { replace: true });
+          }}
+          onDelete={async (password) => {
+            try {
+              await deleteAccount(password);
+              navigate("/login", { replace: true });
+              return null;
+            } catch (e) {
+              return getErrorMessage(e, "Не удалось удалить аккаунт. Попробуйте позже");
+            }
+          }}
+        />
+      </div>
     </div>
   );
 }
