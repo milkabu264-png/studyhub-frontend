@@ -1,140 +1,193 @@
-import { useState } from "react";
-import type { DragEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { TASK_DRAG_TYPE } from "../tasks/TaskCard";
-import useSettings from "../settings/useSettings";
-import { CAMPFIRE_LABELS, getCampfire } from "./campfireUtils";
+import CampfireScene from "./CampfireScene";
+import FocusPanel from "../focus/FocusPanel";
+import useFocus from "../focus/useFocus";
+import { formatClock } from "../focus/focusUtils";
+import { registerFireZone } from "../tasks/logDrag";
+import { CAMPFIRE_LABELS } from "./campfireUtils";
 import { plural } from "../tasks/taskUtils";
+import { MAX_LOGS } from "../../types/campfire";
 import type { CampfireState } from "../../types/campfire";
 
 import "./CampfireCard.css";
 
 interface CampfireCardProps {
-  logsToday: number;
-  onBurnTask: (id: number) => void;
+  logs: number;
+  state: CampfireState;
+  logsToNextState: number | null;
+  minutesToNextBurn: number | null;
+  isLoading: boolean;
+  error: string | null;
+  onRetry: () => void;
+  //есть ли активные задачи, которые можно бросить в костёр
+  hasActiveTasks: boolean;
+  //сразу открыть фокус (например, пришли по ссылке из шапки)
+  openFocus?: boolean;
 }
 
-//насколько большой огонь при каждом состоянии костра
-const FLAME_SCALE: Record<CampfireState, number> = {
-  embers: 0.55,
-  low: 0.8,
-  burning: 1,
-  blazing: 1.25,
+const NEXT_STATE_NAMES: Partial<Record<CampfireState, string>> = {
+  out: "«тлеет»",
+  smoldering: "«горит»",
+  burning: "«пылает»",
 };
 
-//ёлки на фоне: [x, высота, цвет] — дальние светлее, ближние темнее
-const TREES: [number, number, string][] = [
-  [8, 120, "#26332a"], [40, 150, "#1d2820"], [76, 105, "#2b392f"], [108, 70, "#33433a"],
-  [255, 75, "#33433a"], [286, 115, "#2b392f"], [318, 155, "#1d2820"], [350, 125, "#26332a"],
-];
-
-//одна ёлка из трёх ярусов-треугольников
-function getPinePath(x: number, height: number): string {
-  const base = 170;
-  const width = height * 0.42;
-
-  return [0, 1, 2]
-    .map((i) => {
-      const top = base - height + i * height * 0.24;
-      const bottom = top + height * 0.46;
-      const half = (width / 2) * (0.6 + i * 0.25);
-
-      return `M${x} ${top} L${x + half} ${bottom} L${x - half} ${bottom} Z`;
-    })
-    .join(" ");
+function logsText(count: number): string {
+  return `${count} ${plural(count, ["бревно", "бревна", "брёвен"])}`;
 }
 
+//«У вашего костра» на главной (п. 1.6.1).
+//Нажатие на костёр превращает карточку в окно фокус-таймера (п. 1.3).
+
 export default function CampfireCard({
-  logsToday,
-  onBurnTask,
+  logs,
+  state,
+  logsToNextState,
+  minutesToNextBurn,
+  isLoading,
+  error,
+  onRetry,
+  hasActiveTasks,
+  openFocus = false,
 }: CampfireCardProps) {
-  //задачу держат над зоной костра
+  const focus = useFocus();
+
+  //fire — костёр, focus — окно таймера
+  const [mode, setMode] = useState<"fire" | "focus">(
+    openFocus || focus.phase !== "idle" ? "focus" : "fire",
+  );
+
+  //над костром держат задачу-бревно
   const [isHovered, setIsHovered] = useState(false);
-  //короткая вспышка огня, когда задача сгорела
+  //короткая вспышка огня, когда в костёр упало бревно
   const [isFlaring, setIsFlaring] = useState(false);
 
-  //пороги уровней огня — из настроек пользователя
-  const { settings } = useSettings();
-  const campfire = getCampfire(logsToday, settings.campfire);
+  const cardRef = useRef<HTMLElement>(null);
+  const previousLogs = useRef(logs);
 
-  function handleDrop(event: DragEvent<HTMLDivElement>) {
-    event.preventDefault();
-    setIsHovered(false);
-
-    const id = Number(event.dataTransfer.getData(TASK_DRAG_TYPE));
-
-    if (!id) {
+  //вся карточка — место, куда можно бросить бревно
+  useEffect(() => {
+    if (!cardRef.current) {
       return;
     }
 
-    onBurnTask(id);
-    setIsFlaring(true);
-    window.setTimeout(() => setIsFlaring(false), 900);
-  }
+    return registerFireZone(cardRef.current, setIsHovered);
+  }, []);
+
+  //брёвен стало больше — огонь вспыхивает
+  useEffect(() => {
+    if (logs > previousLogs.current) {
+      setIsFlaring(true);
+      const timer = window.setTimeout(() => setIsFlaring(false), 900);
+      previousLogs.current = logs;
+      return () => window.clearTimeout(timer);
+    }
+
+    previousLogs.current = logs;
+  }, [logs]);
+
+  useEffect(() => {
+    if (openFocus) {
+      setMode("focus");
+    }
+  }, [openFocus]);
+
+  const isFocusActive = focus.phase === "running" || focus.phase === "paused";
 
   return (
-    <section className="campfire-section">
-      <h2>У вашего костра</h2>
+    <section
+      ref={cardRef}
+      id="campfire"
+      className={[
+        "campfire-section",
+        isHovered ? "campfire-section-hovered" : "",
+        mode === "focus" ? "campfire-section-focus" : "",
+      ].join(" ")}
+    >
+      <div className="campfire-header">
+        <h2>{mode === "focus" ? "Фокус" : "У вашего костра"}</h2>
 
-      <div
-        className={
-          isFlaring ? "campfire-scene campfire-scene-flaring" : "campfire-scene"
-        }
-      >
-        <div className="campfire-stars" />
-
-        <svg
-          className="campfire-trees"
-          viewBox="0 0 360 170"
-          preserveAspectRatio="xMidYMax slice"
-          aria-hidden="true"
-        >
-          {TREES.map(([x, height, color]) => (
-            <path key={x} d={getPinePath(x, height)} fill={color} />
-          ))}
-          <rect x="0" y="160" width="360" height="10" fill="#2a352c" />
-        </svg>
-
-        <div
-          className="campfire-fire"
-          style={{
-            transform: `translateX(-50%) scale(${FLAME_SCALE[campfire.state]})`,
-          }}
-        >
-          <span className="campfire-flame campfire-flame-outer" />
-          <span className="campfire-flame campfire-flame-inner" />
-          <span className="campfire-logs" />
-        </div>
-      </div>
-
-      <p className="campfire-state">{CAMPFIRE_LABELS[campfire.state]}</p>
-
-      <p className="campfire-info">
-        Брёвен сегодня: <strong>{campfire.logsToday}</strong>
-        {campfire.nextThreshold !== null && (
-          <>
-            {" · "}до следующего уровня ещё{" "}
-            {campfire.nextThreshold - campfire.logsToday}{" "}
-            {plural(campfire.nextThreshold - campfire.logsToday, [
-              "задача",
-              "задачи",
-              "задач",
-            ])}
-          </>
+        {mode === "focus" ? (
+          <button type="button" className="campfire-mode-button" onClick={() => setMode("fire")}>
+            ← К костру
+          </button>
+        ) : (
+          <button type="button" className="campfire-mode-button" onClick={() => setMode("focus")}>
+            Фокус →
+          </button>
         )}
-      </p>
-
-      <div
-        className={isHovered ? "campfire-drop campfire-drop-active" : "campfire-drop"}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsHovered(true);
-        }}
-        onDragLeave={() => setIsHovered(false)}
-        onDrop={handleDrop}
-      >
-        Перетащите сюда готовую задачу
       </div>
+
+      {/* нажатие на костёр открывает фокус-таймер */}
+      {mode === "fire" ? (
+        <button
+          type="button"
+          className="campfire-scene-button"
+          aria-label="Открыть фокус-таймер"
+          onClick={() => setMode("focus")}
+        >
+          <CampfireScene state={state} isFlaring={isFlaring} />
+          <span className="campfire-scene-hint">Нажмите на костёр, чтобы сосредоточиться</span>
+        </button>
+      ) : (
+        <CampfireScene state={state} isFlaring={isFlaring} isCompact />
+      )}
+
+      {mode === "focus" ? (
+        <FocusPanel />
+      ) : (
+        <>
+          {isFocusActive && (
+            <button type="button" className="campfire-focus-chip" onClick={() => setMode("focus")}>
+              {focus.phase === "paused" ? "Фокус на паузе" : "Идёт фокус"} · {formatClock(focus.remainingMs)}
+            </button>
+          )}
+
+          {error ? (
+            <div className="campfire-error" role="alert">
+              <span>{error}</span>
+              <button type="button" onClick={onRetry}>Повторить</button>
+            </div>
+          ) : (
+            <div className="campfire-status" aria-busy={isLoading}>
+              <p className="campfire-state">{CAMPFIRE_LABELS[state]}</p>
+
+              {/* запас брёвен: сколько из 100 */}
+              <div
+                className="campfire-meter"
+                role="meter"
+                aria-label="Запас брёвен"
+                aria-valuemin={0}
+                aria-valuemax={MAX_LOGS}
+                aria-valuenow={logs}
+              >
+                <div className="campfire-meter-fill" style={{ width: `${(logs / MAX_LOGS) * 100}%` }} />
+              </div>
+
+              <p className="campfire-info">
+                <strong>{logs}</strong> из {MAX_LOGS} брёвен
+                {logsToNextState !== null && NEXT_STATE_NAMES[state] && (
+                  <> · до {NEXT_STATE_NAMES[state]} ещё {logsText(logsToNextState)}</>
+                )}
+              </p>
+
+              {minutesToNextBurn !== null && (
+                <p className="campfire-burn">
+                  Костёр сгорает по бревну в час — следующее через {minutesToNextBurn} мин
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className={isHovered ? "campfire-drop campfire-drop-active" : "campfire-drop"}>
+            {isHovered
+              ? "Отпустите — бревно сгорит"
+              : hasActiveTasks
+                ? "Перетащите сюда задачу-бревно или отметьте её галочкой"
+                : "Создайте задачу — она появится здесь бревном"}
+          </div>
+        </>
+      )}
     </section>
   );
 }

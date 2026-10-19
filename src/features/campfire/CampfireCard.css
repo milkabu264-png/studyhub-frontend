@@ -7,19 +7,96 @@
   box-shadow: var(--shadow);
 
   overflow: hidden;
+
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-/* над костром держат задачу */
+/* над костром держат задачу-бревно */
 .campfire-section-hovered {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
-.campfire-section h2 {
-  margin: 0 0 16px;
+.campfire-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-bottom: 16px;
+}
+
+.campfire-header h2 {
+  margin: 0;
 
   font-size: 18px;
+}
+
+.campfire-mode-button {
+  padding: 0;
+
+  border: none;
+  background: none;
+
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.campfire-mode-button:hover {
+  text-decoration: underline;
+}
+
+/* сцена-кнопка: по нажатию открывается фокус */
+.campfire-scene-button {
+  position: relative;
+
+  display: block;
+  width: calc(100% + 40px);
+  margin: 0 -20px;
+  padding: 0;
+
+  border: none;
+  background: none;
+
+  cursor: pointer;
+}
+
+.campfire-scene-button:focus-visible {
+  outline-offset: -4px;
+}
+
+.campfire-scene-hint {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+
+  padding: 4px 10px;
+
+  border-radius: 999px;
+  background-color: rgba(20, 26, 20, 0.55);
+
+  font-size: 11px;
+  font-weight: 600;
+  color: #f6e9c8;
+  white-space: nowrap;
+
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.campfire-scene-button:hover .campfire-scene-hint,
+.campfire-scene-button:focus-visible .campfire-scene-hint {
+  opacity: 1;
+}
+
+/* на телефоне наведения нет — подсказка видна всегда */
+@media (hover: none) {
+  .campfire-scene-hint {
+    opacity: 1;
+  }
 }
 
 /* ночная сцена с ёлками */
@@ -31,6 +108,22 @@
 
   background: linear-gradient(180deg, #2f3a33 0%, #3d4a3c 55%, #4a5640 100%);
   overflow: hidden;
+
+  transition: height 0.35s ease;
+}
+
+.campfire-scene-button .campfire-scene {
+  margin: 0;
+}
+
+/* в режиме фокуса костёр становится маленьким окошком над таймером */
+.campfire-scene-compact {
+  height: 110px;
+}
+
+/* потухший костёр — ночь темнее */
+.campfire-scene-out {
+  background: linear-gradient(180deg, #232b26 0%, #2c362e 55%, #343f31 100%);
 }
 
 .campfire-stars {
@@ -54,11 +147,27 @@
   height: 100%;
 }
 
-/* огонь: два «языка» пламени и брёвна */
+/* огонь: брёвна, пламя, свечение */
 .campfire-fire {
   position: absolute;
   left: 50%;
-  bottom: 14px;
+  bottom: 12px;
+
+  width: 120px;
+  height: 120px;
+
+  transform: translateX(-50%);
+}
+
+.campfire-scene-compact .campfire-fire {
+  transform: translateX(-50%) scale(0.7);
+  transform-origin: 50% 100%;
+}
+
+.campfire-flames {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
 
   width: 80px;
   height: 110px;
@@ -67,7 +176,8 @@
   transition: transform 0.6s cubic-bezier(0.3, 1.5, 0.5, 1);
 }
 
-.campfire-fire::before {
+/* тёплое свечение вокруг пламени */
+.campfire-flames::before {
   content: "";
 
   position: absolute;
@@ -109,6 +219,11 @@
   animation-duration: 1.1s;
 }
 
+/* тлеющий костёр — огонь тусклее */
+.campfire-scene-smoldering .campfire-flame {
+  filter: saturate(0.7) brightness(0.85);
+}
+
 .campfire-logs {
   position: absolute;
   left: 50%;
@@ -138,13 +253,69 @@
   transform: rotate(-14deg);
 }
 
+/* потухший костёр — серые обугленные брёвна */
+.campfire-scene-out .campfire-logs::before,
+.campfire-scene-out .campfire-logs::after {
+  background: linear-gradient(180deg, #5a5048, #3a332d);
+}
+
+/* дым */
+.campfire-smoke span {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+
+  border-radius: 50%;
+  background-color: rgba(220, 220, 210, 0.35);
+
+  animation: campfire-smoke 3.2s ease-out infinite;
+}
+
+.campfire-smoke span:nth-child(2) {
+  animation-delay: 1.6s;
+}
+
+/* искры у пылающего костра */
+.campfire-sparks span {
+  position: absolute;
+  left: 50%;
+  bottom: 70px;
+
+  width: 3px;
+  height: 3px;
+
+  border-radius: 50%;
+  background-color: #ffd36b;
+
+  animation: campfire-spark 1.8s ease-out infinite;
+}
+
+.campfire-sparks span:nth-child(2) { margin-left: 14px; animation-delay: 0.45s; }
+.campfire-sparks span:nth-child(3) { margin-left: -16px; animation-delay: 0.9s; }
+.campfire-sparks span:nth-child(4) { margin-left: 6px; animation-delay: 1.35s; }
+
 @keyframes campfire-flicker {
   0% { transform: scale(1, 1) skewX(0deg); }
   50% { transform: scale(0.96, 1.05) skewX(2deg); }
   100% { transform: scale(1.03, 0.97) skewX(-2deg); }
 }
 
-/* вспышка, когда задача сгорела */
+@keyframes campfire-smoke {
+  0% { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(14px, -80px) scale(2.2); opacity: 0; }
+}
+
+@keyframes campfire-spark {
+  0% { transform: translate(0, 0); opacity: 1; }
+  100% { transform: translate(10px, -70px); opacity: 0; }
+}
+
+/* вспышка, когда бревно сгорело */
 .campfire-scene-flaring .campfire-flame {
   animation: campfire-flare 0.9s ease-out;
 }
@@ -153,15 +324,61 @@
   40% { transform: scale(1.35, 1.5); filter: brightness(1.2); }
 }
 
-.campfire-state {
-  margin: 14px 0 4px;
+/* «Идёт фокус · 18:42» под костром */
+.campfire-focus-chip {
+  display: block;
 
-  text-align: center;
+  margin: 12px auto 0;
+  padding: 6px 14px;
+
+  border: none;
+  border-radius: 999px;
+  background-color: var(--color-sage);
+
+  font-size: 13px;
+  font-weight: 700;
+  color: #4d5a43;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.campfire-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+
+  margin: 14px 0 12px;
+}
+
+.campfire-state {
+  margin: 0;
+
   font-weight: 700;
 }
 
-.campfire-info {
-  margin: 0 0 12px;
+/* запас брёвен 0–100 */
+.campfire-meter {
+  width: 100%;
+  height: 8px;
+
+  border-radius: 999px;
+  background-color: var(--color-surface-muted);
+  overflow: hidden;
+}
+
+.campfire-meter-fill {
+  height: 100%;
+
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d98a3d, #c0613f);
+
+  transition: width 0.6s ease;
+}
+
+.campfire-info,
+.campfire-burn {
+  margin: 0;
 
   text-align: center;
   font-size: 12px;
@@ -170,6 +387,36 @@
 
 .campfire-info strong {
   color: var(--color-text);
+}
+
+.campfire-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 14px 0 12px;
+  padding: 8px 12px;
+
+  border-radius: 8px;
+  background-color: var(--color-accent-soft);
+
+  font-size: 13px;
+  color: #8a3f26;
+}
+
+.campfire-error span {
+  flex: 1;
+}
+
+.campfire-error button {
+  padding: 0;
+
+  border: none;
+  background: none;
+
+  font-weight: 700;
+  color: var(--color-accent);
+  cursor: pointer;
 }
 
 /* зона, куда бросают задачу */
@@ -196,8 +443,18 @@
 
 @media (prefers-reduced-motion: reduce) {
   .campfire-flame,
-  .campfire-scene-flaring .campfire-flame {
+  .campfire-scene-flaring .campfire-flame,
+  .campfire-smoke span,
+  .campfire-sparks span {
     animation: none;
+  }
+
+  .campfire-scene {
+    transition: none;
   }
 }
 
+/* пока тянем бревно, подсказку про фокус не показываем */
+body.is-dragging-log .campfire-scene-hint {
+  opacity: 0;
+}
