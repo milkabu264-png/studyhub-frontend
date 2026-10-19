@@ -9,6 +9,9 @@ import {
   sortNotes,
 } from "../../features/notes/noteUtils";
 
+import useConfirm from "../../components/ConfirmDialog/useConfirm";
+import useToast from "../../components/Toast/useToast";
+
 import type { Note } from "../../types/note";
 
 import "./NotebookPage.css";
@@ -30,6 +33,9 @@ function NotebookPage() {
     handleDeleteNote,
   } = useNotes();
 
+  const confirm = useConfirm();
+  const showToast = useToast();
+
   const [search, setSearch] = useState("");
 
   //заметка, открытая в форме для редактирования
@@ -46,6 +52,41 @@ function NotebookPage() {
 
   const sortedNotes = sortNotes(filterNotes(notesInCategory, search));
 
+  async function deleteNote(note: Note) {
+    const ok = await confirm({
+      title: "Удалить запись?",
+      text: `«${note.title}» исчезнет из блокнота.`,
+      confirmText: "Удалить",
+      danger: true,
+    });
+
+    if (!ok) {
+      return;
+    }
+
+    const result = await handleDeleteNote(note.id);
+
+    if (!result.ok) {
+      showToast(result.error, "error");
+      return;
+    }
+
+    showToast("Запись удалена");
+
+    //удалили заметку, которую редактировали, — закрываем редактирование
+    if (editingNote?.id === note.id) {
+      setEditingNote(null);
+    }
+  }
+
+  async function togglePin(note: Note) {
+    const result = await handleTogglePin(note);
+
+    if (!result.ok) {
+      showToast(result.error, "error");
+    }
+  }
+
   return (
     <div className="notebook-page">
       <div className="notebook-header">
@@ -58,10 +99,20 @@ function NotebookPage() {
         <NoteForm
           key={editingNote?.id ?? "new"}
           editingNote={editingNote}
-          onCreate={(data) => void handleCreateNote(data)}
-          onUpdate={(id, data) => {
-            void handleUpdateNote(id, data);
+          onCreate={async (data) => {
+            const result = await handleCreateNote(data);
+            return result.ok ? null : result.error;
+          }}
+          onUpdate={async (id, data) => {
+            const result = await handleUpdateNote(id, data);
+
+            if (!result.ok) {
+              return result.error;
+            }
+
+            showToast("Запись сохранена");
             setEditingNote(null);
+            return null;
           }}
           onCancelEdit={() => setEditingNote(null)}
         />
@@ -133,19 +184,12 @@ function NotebookPage() {
                 <NoteCard
                   key={note.id}
                   note={note}
-                  onTogglePin={handleTogglePin}
+                  onTogglePin={(item) => void togglePin(item)}
                   onEdit={(item) => {
                     setEditingNote(item);
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  onDelete={(id) => {
-                    void handleDeleteNote(id);
-
-                    //удалили заметку, которую редактировали, — закрываем редактирование
-                    if (editingNote?.id === id) {
-                      setEditingNote(null);
-                    }
-                  }}
+                  onDelete={(item) => void deleteNote(item)}
                 />
               ))}
             </div>

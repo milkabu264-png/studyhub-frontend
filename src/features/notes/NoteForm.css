@@ -105,3 +105,19 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.note-form-submit:disabled {
+  background-color: #d8cfc0;
+  cursor: default;
+}
+
+.note-form-server-error {
+  margin: 0;
+  padding: 10px 12px;
+
+  border-radius: 10px;
+  background-color: #fbecea;
+
+  font-size: 13px;
+  color: #8a3a33;
+}

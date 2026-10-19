@@ -6,8 +6,9 @@ import {
   getNotes,
   updateNote,
 } from "../../services/noteApi";
-import { USE_MOCKS } from "../../services/api";
-import { mockNotes } from "../../mocks/notes";
+import { getErrorMessage } from "../../services/api";
+import { failure, success } from "../../shared/result";
+import type { ActionResult } from "../../shared/result";
 
 import type {
   CreateNoteRequest,
@@ -32,10 +33,9 @@ export default function useNotes() {
     setError(null);
 
     try {
-      const data = USE_MOCKS ? mockNotes : await getNotes();
-      setNotes(data);
+      setNotes(await getNotes());
     } catch (e) {
-      setError(getErrorMessage(e));
+      setError(getErrorMessage(e, "Не удалось загрузить записи. Попробуйте позже"));
     } finally {
       setIsLoading(false);
     }
@@ -52,53 +52,30 @@ export default function useNotes() {
     );
   }
 
-  async function handleCreateNote(data: CreateNoteRequest) {
+  async function handleCreateNote(data: CreateNoteRequest): Promise<ActionResult<Note>> {
     try {
-      if (USE_MOCKS) {
-        const now = new Date().toISOString();
-
-        const newNote: Note = {
-          id: Date.now(),
-          title: data.title,
-          text: data.text,
-          category: data.category,
-          isPinned: false,
-          createdAt: now,
-          updatedAt: now,
-        };
-
-        setNotes((currentNotes) => [newNote, ...currentNotes]);
-        return;
-      }
-
       const created = await createNote(data);
+      //новая запись — в начале списка
       setNotes((currentNotes) => [created, ...currentNotes]);
+      return success(created);
     } catch (e) {
-      setError(getErrorMessage(e));
+      return failure(getErrorMessage(e, "Не удалось сохранить запись. Попробуйте позже"));
     }
   }
 
-  async function handleUpdateNote(id: number, data: UpdateNoteRequest) {
+  async function handleUpdateNote(id: number, data: UpdateNoteRequest): Promise<ActionResult<Note>> {
     try {
-      if (USE_MOCKS) {
-        const note = notes.find((item) => item.id === id);
-
-        if (note) {
-          replaceNote({ ...note, ...data, updatedAt: new Date().toISOString() });
-        }
-
-        return;
-      }
-
-      replaceNote(await updateNote(id, data));
+      const updated = await updateNote(id, data);
+      replaceNote(updated);
+      return success(updated);
     } catch (e) {
-      setError(getErrorMessage(e));
+      return failure(getErrorMessage(e, "Не удалось сохранить. Попробуйте позже"));
     }
   }
 
   //закрепить / открепить — это обычное изменение заметки
   function handleTogglePin(note: Note) {
-    void handleUpdateNote(note.id, {
+    return handleUpdateNote(note.id, {
       title: note.title,
       text: note.text,
       category: note.category,
@@ -106,15 +83,13 @@ export default function useNotes() {
     });
   }
 
-  async function handleDeleteNote(id: number) {
+  async function handleDeleteNote(id: number): Promise<ActionResult> {
     try {
-      if (!USE_MOCKS) {
-        await deleteNote(id);
-      }
-
+      await deleteNote(id);
       setNotes((currentNotes) => currentNotes.filter((note) => note.id !== id));
+      return success(undefined);
     } catch (e) {
-      setError(getErrorMessage(e));
+      return failure(getErrorMessage(e, "Не удалось удалить. Попробуйте позже"));
     }
   }
 
@@ -129,13 +104,4 @@ export default function useNotes() {
     handleTogglePin,
     handleDeleteNote,
   };
-}
-
-//apiRequest бросает Error с текстом от сервера, fetch без сервера — TypeError
-function getErrorMessage(error: unknown): string {
-  if (error instanceof TypeError) {
-    return "Не удалось связаться с сервером";
-  }
-
-  return error instanceof Error ? error.message : "Что-то пошло не так";
 }

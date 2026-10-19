@@ -6,7 +6,8 @@ interface NoteCardProps {
   note: Note;
   onTogglePin: (note: Note) => void;
   onEdit: (note: Note) => void;
-  onDelete: (id: number) => void;
+  //подтверждение удаления спрашивает страница
+  onDelete: (note: Note) => void;
 }
 
 //линейные иконки для кнопок карточки
@@ -45,8 +46,7 @@ export default function NoteCard({
   return (
     <article className={note.isPinned ? "note-card note-card-pinned" : "note-card"}>
       <div className="note-card-header">
-        {/* заголовок необязателен — если его нет, сразу показываем текст */}
-        {note.title && <h3>{note.title}</h3>}
+        <h3>{note.title}</h3>
 
         <div className="note-card-actions">
           <button
@@ -64,12 +64,7 @@ export default function NoteCard({
             className="note-card-button note-card-hidden note-card-delete"
             aria-label="Удалить заметку"
             title="Удалить"
-            onClick={() => {
-              //спрашиваем, чтобы не удалить заметку случайным кликом
-              if (window.confirm("Удалить эту заметку?")) {
-                onDelete(note.id);
-              }
-            }}
+            onClick={() => onDelete(note)}
           >
             <Icon path={ICONS.delete} />
           </button>
