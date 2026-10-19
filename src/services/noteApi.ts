@@ -1,4 +1,5 @@
-import { apiRequest } from "./api";
+import { USE_MOCKS, apiRequest } from "./api";
+import { mockNotes } from "../mocks/mockServer";
 
 import type {
   Note,
@@ -7,6 +8,8 @@ import type {
 } from "../types/note.ts";
 
 export function getNotes() {
+  if (USE_MOCKS) return mockNotes.getAll();
+
   return apiRequest<Note[]>(
     "/notes",
   );
@@ -15,6 +18,8 @@ export function getNotes() {
 export function createNote(
   data: CreateNoteRequest,
 ) {
+  if (USE_MOCKS) return mockNotes.create(data);
+
   return apiRequest<Note>(
     "/notes",
     {
@@ -28,6 +33,8 @@ export function updateNote(
   id: number,
   data: UpdateNoteRequest,
 ) {
+  if (USE_MOCKS) return mockNotes.update(id, data);
+
   return apiRequest<Note>(
     `/notes/${id}`,
     {
@@ -40,6 +47,8 @@ export function updateNote(
 export function deleteNote(
   id: number,
 ) {
+  if (USE_MOCKS) return mockNotes.remove(id);
+
   return apiRequest<void>(
     `/notes/${id}`,
     {
