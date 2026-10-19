@@ -1,12 +1,13 @@
 .task-card {
-  display: grid;
-  grid-template-columns: 14px 18px minmax(0, 1fr) auto auto;
+  display: flex;
   align-items: center;
   gap: 12px;
 
   padding: 10px 8px 10px 10px;
 
-  border-bottom: 1px solid #ebe3d3;
+  border-bottom: 1px solid var(--color-border);
+
+  transition: background-color 0.15s, opacity 0.15s;
 }
 
 .task-card:last-child {
@@ -17,64 +18,81 @@
   background-color: #fcf7ec;
 }
 
-/* ручка ⠿, за которую задачу тянут в костёр */
+/* активную задачу можно взять мышкой и перетащить в костёр */
+.task-card:not(.task-card-completed):not(.task-card-failed) {
+  cursor: grab;
+}
+
+.task-card-dragging {
+  opacity: 0.35;
+}
+
+/* просроченная задача — с тёплой полоской слева */
+.task-card-overdue {
+  box-shadow: inset 3px 0 0 var(--color-danger);
+  background-color: #fdf3ef;
+}
+
+/* ручка ⠿ — за неё задачу тянут пальцем на телефоне */
 .task-card-handle {
+  flex-shrink: 0;
+
   color: #b9b1a2;
   font-size: 14px;
   line-height: 1;
-  cursor: grab;
   user-select: none;
+
+  /* на сенсорном экране палец на ручке двигает бревно, а не страницу */
+  touch-action: none;
 }
 
-.task-card-handle:active {
-  cursor: grabbing;
-}
-
-.task-card-completed .task-card-handle {
+.task-card-completed .task-card-handle,
+.task-card-failed .task-card-handle {
   visibility: hidden;
 }
 
-/* свой вид чекбокса: квадрат с оливковой заливкой и белой галочкой */
+/* квадратик «Выполнено» */
 .task-card-checkbox {
-  appearance: none;
-
   display: grid;
   place-items: center;
+  flex-shrink: 0;
 
-  width: 18px;
-  height: 18px;
-  margin: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
 
   border: 1.5px solid #cdc4b2;
-  border-radius: 5px;
+  border-radius: 6px;
   background-color: white;
 
+  color: white;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s;
+
+  transition: border-color 0.15s, background-color 0.15s;
 }
 
-.task-card-checkbox:hover {
+.task-card-checkbox-active:hover {
   border-color: var(--color-olive);
+  background-color: var(--color-sage);
 }
 
-.task-card-checkbox:checked {
+.task-card-checkbox:disabled {
+  cursor: default;
+}
+
+.task-card-checkbox-completed {
+  border-color: var(--color-olive);
   background-color: var(--color-olive);
-  border-color: var(--color-olive);
 }
 
-.task-card-checkbox:checked::after {
-  content: "";
-
-  width: 5px;
-  height: 9px;
-  margin-top: -2px;
-
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+.task-card-checkbox-failed {
+  border-color: #c9bfae;
+  background-color: #e4ddcf;
+  color: #7d7466;
 }
 
 .task-card-body {
+  flex: 1;
   min-width: 0;
 }
 
@@ -90,31 +108,41 @@
 }
 
 .task-card-completed h3 {
-  color: #8a8274;
+  color: var(--color-muted);
   text-decoration: line-through;
+}
+
+.task-card-failed h3 {
+  color: var(--color-muted);
 }
 
 .task-card-meta {
   margin: 3px 0 0;
 
   font-size: 12px;
-  color: #8a8274;
+  color: var(--color-muted);
+}
+
+.task-card-reward {
+  color: #a08f74;
 }
 
 .task-deadline {
-  color: #8a8274;
+  color: var(--color-muted);
 }
 
 .task-deadline-overdue {
-  color: #c94b4b;
+  color: var(--color-danger);
   font-weight: 600;
 }
 
 .task-card-category {
+  flex-shrink: 0;
+
   padding: 3px 9px;
 
-  background-color: #eef0e4;
   border-radius: 6px;
+  background-color: #eef0e4;
 
   font-size: 12px;
   font-weight: 600;
@@ -122,9 +150,34 @@
   white-space: nowrap;
 }
 
+/* метка статуса у отмеченной задачи */
+.task-card-status {
+  flex-shrink: 0;
+
+  min-width: 28px;
+  padding: 3px 9px;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.task-card-status-completed {
+  background-color: var(--color-sage);
+  color: #4d6a3a;
+}
+
+.task-card-status-failed {
+  background-color: #f1ebe0;
+  color: #7d7466;
+}
+
 /* меню «⋯» */
 .task-card-menu {
   position: relative;
+  flex-shrink: 0;
 }
 
 .task-card-menu-button {
@@ -137,7 +190,7 @@
 
   font-size: 18px;
   line-height: 1;
-  color: #8a8274;
+  color: var(--color-muted);
   cursor: pointer;
 }
 
@@ -158,7 +211,7 @@
   padding: 6px;
 
   background-color: white;
-  border: 1px solid #ebe3d3;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   box-shadow: 0 10px 28px rgba(60, 50, 30, 0.14);
 }
@@ -170,47 +223,68 @@
   border-radius: 8px;
   background: transparent;
 
-  font: inherit;
   font-size: 13px;
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .task-card-menu-list button:hover {
-  background-color: #f6f1e5;
+  background-color: var(--color-surface-muted);
 }
 
 .task-card-menu-danger {
-  color: #c94b4b;
+  color: var(--color-danger);
+}
+
+/* «бревно», которое тянут за курсором (создаётся в logDrag.ts) */
+.log-ghost {
+  position: fixed;
+  z-index: 3000;
+
+  display: flex;
+  align-items: center;
+
+  max-width: 240px;
+  height: 34px;
+  padding: 0 16px 0 12px;
+
+  border-radius: 17px 8px 8px 17px;
+  background:
+    radial-gradient(circle at 14px 50%, #e8c896 0 7px, #b9864f 8px 10px, transparent 11px),
+    repeating-linear-gradient(0deg, #8b5a36 0 3px, #7a4d2d 3px 6px);
+  box-shadow: 0 8px 20px rgba(60, 35, 15, 0.35);
+
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff7ea;
+
+  pointer-events: none;
+  transform-origin: center;
+}
+
+.log-ghost span {
+  padding-left: 22px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* пока тянем бревно — курсор «рука» везде и без выделения текста */
+body.is-dragging-log,
+body.is-dragging-log * {
+  cursor: grabbing !important;
+  user-select: none;
 }
 
 @media (max-width: 600px) {
   .task-card {
-    grid-template-columns: 12px 18px minmax(0, 1fr) auto;
     gap: 10px;
   }
 
-  .task-card-category {
+  .task-card-category,
+  .task-card-reward {
     display: none;
   }
-}
-
-/* активную задачу можно взять мышкой и перетащить в костёр */
-.task-card[draggable="true"] {
-  cursor: grab;
-}
-
-.task-card[draggable="true"]:active {
-  cursor: grabbing;
-}
-
-/* на чекбоксе и кнопке меню — обычный курсор */
-.task-card-checkbox,
-.task-card-menu {
-  cursor: pointer;
-}
-
-/* строку сейчас перетаскивают */
-.task-card-dragging {
-  opacity: 0.4;
 }
