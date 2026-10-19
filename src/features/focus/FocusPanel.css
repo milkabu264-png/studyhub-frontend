@@ -1,0 +1,208 @@
+.focus-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  padding: 18px 0 4px;
+
+  text-align: center;
+}
+
+.focus-question {
+  margin: 0;
+
+  font-weight: 700;
+}
+
+.focus-presets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.focus-preset {
+  padding: 6px 12px;
+
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background-color: white;
+
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.focus-preset:hover {
+  border-color: var(--color-olive);
+}
+
+.focus-preset-active {
+  border-color: var(--color-olive);
+  background-color: var(--color-sage);
+}
+
+.focus-inputs {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.focus-inputs label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 14px;
+  color: var(--color-muted);
+}
+
+.focus-inputs input {
+  width: 72px;
+  padding: 10px;
+
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background-color: white;
+
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.focus-inputs input:focus {
+  border-color: var(--color-olive);
+}
+
+.focus-error {
+  margin: 0;
+
+  font-size: 13px;
+  color: var(--color-danger);
+}
+
+.focus-note {
+  margin: 0;
+
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+/* большие цифры обратного отсчёта */
+.focus-clock {
+  margin: 0;
+
+  font-size: 52px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-clock-paused {
+  color: var(--color-muted);
+}
+
+.focus-caption {
+  margin: -4px 0 0;
+
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.focus-progress {
+  width: 100%;
+  height: 6px;
+
+  border-radius: 999px;
+  background-color: var(--color-surface-muted);
+  overflow: hidden;
+}
+
+.focus-progress-fill {
+  height: 100%;
+
+  border-radius: inherit;
+  background-color: var(--color-olive);
+
+  transition: width 0.25s linear;
+}
+
+.focus-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.focus-actions .focus-button {
+  flex: 1;
+}
+
+.focus-button {
+  padding: 11px 18px;
+
+  border: 1px solid var(--color-border-strong);
+  border-radius: 10px;
+  background-color: white;
+
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.focus-button:hover {
+  background-color: var(--color-surface-muted);
+}
+
+.focus-button-primary {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.focus-button-primary:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.focus-button:disabled {
+  border-color: #d8cfc0;
+  background-color: #d8cfc0;
+  cursor: default;
+}
+
+.focus-start {
+  width: 100%;
+}
+
+.focus-finished-title {
+  margin: 0;
+
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.focus-finished-text {
+  margin: 0;
+
+  color: var(--color-muted);
+}
+
+.focus-sound-hint {
+  margin: 0;
+  padding: 8px 12px;
+
+  border-radius: 8px;
+  background-color: #fbefe8;
+
+  font-size: 12px;
+  color: #8a3f26;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-progress-fill {
+    transition: none;
+  }
+}
