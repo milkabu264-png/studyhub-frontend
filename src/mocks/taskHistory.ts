@@ -1,7 +1,7 @@
 import type { Task, TaskDifficulty } from "../types/task.ts";
 
-// Выполненные и проваленные задачи за прошлые дни — чтобы статистике
-// было что показать без backend. На главной эти задачи не видны.
+// Выполненные и невыполненные задачи за прошлые 30 дней — чтобы статистике
+// и календарю было что показать без backend.
 
 const TITLES = [
   "Разобрать почту",
@@ -28,7 +28,7 @@ function toDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function createHistory(): Task[] {
+export function createTaskHistory(): Task[] {
   const tasks: Task[] = [];
   let id = 1000;
 
@@ -53,26 +53,25 @@ function createHistory(): Task[] {
       });
     }
 
-    //примерно раз в неделю одна задача проваливается
+    //примерно раз в неделю одна задача остаётся невыполненной
     if (daysAgo % 6 === 0) {
-      const failedAt = new Date();
-      failedAt.setDate(failedAt.getDate() - daysAgo);
+      const markedAt = new Date();
+      markedAt.setDate(markedAt.getDate() - daysAgo);
+      markedAt.setHours(21, 0, 0, 0);
 
       tasks.push({
         id: id++,
         title: "Отложенное дело",
         description: null,
-        date: toDateString(failedAt),
+        date: toDateString(markedAt),
         difficulty: "medium",
         category: "Личное",
         status: "failed",
-        createdAt: failedAt.toISOString(),
-        completedAt: null,
+        createdAt: markedAt.toISOString(),
+        completedAt: markedAt.toISOString(),
       });
     }
   });
 
   return tasks;
 }
-
-export const mockTaskHistory: Task[] = createHistory();
