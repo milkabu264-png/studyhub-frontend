@@ -1,7 +1,7 @@
 export interface Note {
   id: number;
 
-  title: string | null;
+  title: string;
   text: string;
 
   category: string | null;
@@ -12,11 +12,11 @@ export interface Note {
   updatedAt: string;
 }
 
-//интерфейс заметки: заголовок необязателен, текст — обязателен (до 5000 символов),
+//интерфейс заметки: заголовок (до 200 символов) и текст (до 5000 символов) обязательны,
 //isPinned — закреплённая заметка показывается первой.
 
 export interface CreateNoteRequest {
-  title: string | null;
+  title: string;
   text: string;
   category: string | null;
 }
@@ -24,7 +24,7 @@ export interface CreateNoteRequest {
 //данные для создания заметки — id, даты и закрепление выставляет сервер.
 
 export interface UpdateNoteRequest {
-  title: string | null;
+  title: string;
   text: string;
   category: string | null;
   isPinned: boolean;
@@ -33,3 +33,4 @@ export interface UpdateNoteRequest {
 //данные для изменения заметки (в том числе закрепить / открепить).
 
 export const NOTE_MAX_LENGTH = 5000;
+export const NOTE_TITLE_MAX_LENGTH = 200;
