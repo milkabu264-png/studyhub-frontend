@@ -1,12 +1,18 @@
 import AppRouter from "./router";
-import SettingsProvider from "../features/settings/SettingsProvider";
+import AuthProvider from "../features/auth/AuthProvider";
+import ConfirmProvider from "../components/ConfirmDialog/ConfirmProvider";
+import ToastProvider from "../components/Toast/ToastProvider";
 
-//SettingsProvider снаружи — настройки доступны на всех страницах
+//общие для всех страниц вещи: кто вошёл, окно подтверждения, всплывающие сообщения
 function App() {
   return (
-    <SettingsProvider>
-      <AppRouter />
-    </SettingsProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <ConfirmProvider>
+          <AppRouter />
+        </ConfirmProvider>
+      </ToastProvider>
+    </AuthProvider>
   );
 }
 
